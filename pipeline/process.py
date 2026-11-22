@@ -3,7 +3,7 @@
 Local frame: x = east, y = north, metres, origin = (X0, Y0) in EPSG:32619 (see manifest.json).
 z = metres above sea level (NAVD88 from 3DEP).
 
-Outputs (public/tiles -> /data/shrewsbury-data/tiles):
+Outputs (out/ -> /data/shrewsbury-data/out):
   manifest.json            frame, grid, counts, layer list, sources
   terrain_u16.bin          heightmap, uint16 little-endian, row 0 = south, col 0 = west,
                            z = min + v * scale  (see manifest.terrain)

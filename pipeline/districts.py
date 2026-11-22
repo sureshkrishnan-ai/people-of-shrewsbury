@@ -189,12 +189,50 @@ def build(d):
         q = f["properties"]
         if abs(q["x"] - cx) <= h and abs(q["y"] - cy) <= h:
             out["pois"].append(q["id"])
+
+    out["places"] = [[p["name"], round(p["x"] - cx, 1), round(-(p["y"] - cy), 1)] for p in man.get("places", [])
+                     if abs(p["x"] - cx) <= h and abs(p["y"] - cy) <= h and p.get("kind") != "street"]
+
+    # spawn: the point of the district's main street (or any named street) nearest the centre
+    want = d.get("spawnStreet")
+    best = None
+    for f in roads:
+        p = f["properties"]
+        if p["cls"] in SKIP_ROADS or p["cls"] in PATHS or p["cls"] == "service" or not p.get("name"): continue
+        if want and p["name"] != want: continue
+        g = shape(f["geometry"])
+        if not g.intersects(win): continue
+        dd = g.distance(Point(cx, cy))
+        if best is None or dd < best[0]: best = (dd, g)
+    if best:
+        g = best[1]; t = g.project(Point(cx, cy))
+        a = g.interpolate(t); b = g.interpolate(min(g.length, t + 14) if t + 14 <= g.length else max(0, t - 14))
+        face = math.atan2((b.x - a.x), -(b.y - a.y))  # game yaw: atan2(dx, dz)
+        out["spawn"] = [round(a.x - cx, 1), round(-(a.y - cy), 1), round(face, 3)]
+        # standing slots along the pavement either side of the spawn street (for residents and onboarding)
+        foot = [shape(f["geometry"]) for f in buildings if pad.contains(shape(f["geometry"]).representative_point())]
+        slots = []
+        for k, dt in enumerate([6, -6, 11, -11, 16, -16, 22, -22, 28, -28, 34, -34]):
+            tt = min(max(t + dt, 0), g.length)
+            p0 = g.interpolate(tt); p1 = g.interpolate(min(g.length, tt + 1)) if tt + 1 <= g.length else g.interpolate(tt - 1)
+            dx, dy = p1.x - p0.x, p1.y - p0.y; l = math.hypot(dx, dy) or 1
+            side = 1 if k % 2 == 0 else -1
+            off = 5.5
+            px, py = p0.x - dy / l * off * side, p0.y + dx / l * off * side
+            if any(fp.distance(Point(px, py)) < 1.2 for fp in foot): continue
+            # face the street
+            fx, fy = p0.x - px, p0.y - py
+            slots.append([round(px - cx, 1), round(-(py - cy), 1), round(math.atan2(fx, -fy), 3)])
+        out["slots"] = slots[:10]
+        out["portal"] = [round(b.x - cx, 1), round(-(b.y - cy), 1), round(face + math.pi, 3)]
+    else:
+        out["spawn"] = [0, 0, 0]; out["portal"] = [0, 12, math.pi]; out["slots"] = [[3, 3, 0], [-3, 3, 0], [3, -3, 0]]
     return out
 
 
 def main():
     DST.mkdir(parents=True, exist_ok=True); DATA.mkdir(parents=True, exist_ok=True)
-    summary = {}
+    summary = {}; meta = {}
     for d in CFG:
         o = build(d)
         s = json.dumps(o, separators=(",", ":"))
@@ -203,6 +241,8 @@ def main():
                             "water": len(o["water"]), "trees": len(o["trees"]) // 2, "pois": len(o["pois"]),
                             "streets": len(o["names"]), "bytes": len(s)}
         print(d["id"], summary[d["id"]])
+        meta[d["id"]] = {"spawn": o["spawn"], "portal": o["portal"], "slots": o["slots"], "places": o["places"], "streets": o["names"]}
+    (DATA / "districts-meta.json").write_text(json.dumps(meta, separators=(",", ":"), ensure_ascii=False))
     # town-wide business list (OSM POIs; no stories, no photos — those come from owners with consent)
     biz = []
     for f in pois:

@@ -5,7 +5,8 @@ import { Suspense, useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import { RUN, WALK } from '@shared/net/config'
-import { active, halfOf } from '../districts/active'
+import { active, halfOf, placeLabelAt } from '../districts/active'
+import { startPose } from '@/city/config'
 import { useGame } from '../store'
 import { Avatar, type AvatarState } from '../characters/Avatar'
 import { camRef, installInput, keys, look, stick } from './input'
@@ -128,7 +129,7 @@ export function Player() {
     if (game.district !== s.district) {
       // arrived in a district: step out of its portal (or start at its spawn)
       const first = s.district === ''
-      const p = first ? active.def.spawn : active.def.arrival
+      const p = first ? (startPose() ?? active.def.spawn) : active.def.arrival
       s.pos.set(p.x, active.def.ground(p.x, p.z), p.z)
       s.vel.set(0, 0, 0)
       s.facing = p.face
@@ -353,7 +354,7 @@ export function Player() {
     s.landmarkT -= dt
     if (s.landmarkT <= 0) {
       s.landmarkT = 0.3
-      const lm = active.def.landmarks.find((l) => Math.hypot(l.x - s.pos.x, l.z - s.pos.z) < l.r)?.label ?? active.def.area
+      const lm = placeLabelAt(active.def, s.pos.x, s.pos.z)
       if (lm !== game.landmark) game.setLandmark(lm)
     }
   })

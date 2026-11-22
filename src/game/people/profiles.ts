@@ -1,13 +1,14 @@
 import type { Status } from '../status'
-// SAMPLE PROFILES — fictional people and companies, for prototyping only.
-// Replace with real, consented designer profiles before sharing publicly.
+// SAMPLE RESIDENTS — fictional people, clearly labelled "(SAMPLE)", so the town isn't empty before real,
+// consented residents join (SUBMISSIONS.md). They are not real Shrewsbury residents and never will be: no real
+// names, no real businesses. They retire automatically once the community is big enough (directory.ts).
 
 export type Profile = {
   id: string
   name: string
   role: string
   company: string
-  /** Where in Bengaluru they say they're from (not where they stand in the scene). */
+  /** Where in town they say they're from — a district name or an area (not where they stand in the scene). */
   location: string
   building?: string
   previously?: string
@@ -26,167 +27,26 @@ export type Profile = {
   status?: Status
 }
 
-const PI = Math.PI
+import metaJson from '@/city/data/districts-meta.json'
+
+const META = metaJson as unknown as Record<string, { slots: [number, number, number][] }>
+/** The k-th standing slot of a district (pipeline-placed on the pavement of its main street). */
+const at = (district: string, k: number) => {
+  const s = META[district]?.slots ?? [[0, 0, 0]]
+  const [x, z, face] = s[k % s.length]
+  return { x, z, face }
+}
+
+const sample = (p: Omit<Profile, 'links' | 'openToWork'> & Partial<Profile>): Profile => ({ links: {}, openToWork: false, sample: true, ...p })
 
 export const PEOPLE: Profile[] = [
-  {
-    id: 'ananya',
-    status: { emoji: '☕', text: 'Up for a coffee chat about design systems', expiresAt: null },
-    name: 'ANANYA RAO',
-    role: 'Product Designer',
-    company: 'Kettle',
-    location: 'Koramangala',
-    building: 'Doodle Desk',
-    previously: 'Hopscotch',
-    skills: ['Figma', 'Prototyping', 'Fintech'],
-    openToWork: false,
-    links: {},
-    character: 'designer',
-    spot: { x: 11, z: -5.85, face: PI },
-  },
-  {
-    id: 'priya',
-    status: { emoji: '👀', text: 'Looking for a frontend co-founder', expiresAt: null },
-    name: 'PRIYA NAIR',
-    role: 'Founder',
-    company: 'Thali Studio',
-    location: 'Domlur',
-    building: 'Thali — a design system for Indic apps',
-    skills: ['Design systems', 'Indic typography', 'Hiring'],
-    openToWork: false,
-    links: {},
-    character: 'founder',
-    spot: { x: 14.0, z: -5.95, face: PI - 0.5 },
-  },
-  {
-    id: 'nikhil',
-    name: 'NIKHIL JOSHI',
-    role: 'Partner',
-    company: 'Banyan Ventures',
-    location: 'Whitefield',
-    skills: ['Seed investing', 'Consumer', 'SaaS'],
-    openToWork: false,
-    links: {},
-    character: 'investor',
-    spot: { x: 15.15, z: -6.95, face: -0.97 },
-  },
-  {
-    id: 'arjun',
-    name: 'ARJUN MENON',
-    role: 'Design Engineer',
-    company: 'Loop Labs',
-    location: 'HSR Layout',
-    building: 'Tokenizer — Figma tokens to code',
-    skills: ['React', 'Design tokens', 'Figma plugins'],
-    openToWork: true,
-    links: {},
-    character: 'developer',
-    spot: { x: -19, z: 9.8, face: PI },
-  },
-  {
-    id: 'karthik',
-    status: { emoji: '🎧', text: 'Heads down till 6 — ping me after', expiresAt: null },
-    name: 'KARTHIK SHETTY',
-    role: 'Motion Designer',
-    company: 'Freelance',
-    location: 'Koramangala',
-    building: 'Kinetic type experiments',
-    skills: ['Motion', 'After Effects', 'Type'],
-    openToWork: true,
-    links: {},
-    character: 'rockstar',
-    path: [
-      [13, 13],
-      [27, 13],
-      [27, 27],
-      [13, 27],
-    ],
-    pause: 0.8,
-  },
-  {
-    id: 'meera',
-    status: { emoji: '💼', text: 'Hiring two product designers this month!', expiresAt: null },
-    name: 'MEERA IYER',
-    role: 'Brand Designer',
-    company: 'Peepal Labs',
-    location: 'Koramangala',
-    building: 'Peepal Labs rebrand',
-    previously: 'Studio Kaapi',
-    skills: ['Branding', 'Illustration', 'Identity'],
-    openToWork: false,
-    links: {},
-    character: 'creative',
-    spot: { x: -16.2, z: 7.15, face: PI },
-  },
-  {
-    id: 'rohan',
-    status: { emoji: '🧪', text: 'Shipping v2 this week — need beta testers', expiresAt: null },
-    name: 'ROHAN GOWDA',
-    role: 'Indie Hacker',
-    company: 'Solo',
-    location: 'HSR Layout',
-    building: 'BusBuddy — live bus ETAs',
-    skills: ['Mobile', 'Maps', 'Shipping fast'],
-    openToWork: false,
-    links: {},
-    character: 'maker',
-    spot: { x: -36, z: 9.4, face: 0 },
-  },
-  {
-    id: 'vikram',
-    name: 'VIKRAM REDDY',
-    role: 'Head of Product',
-    company: 'Juno Pay',
-    location: 'Bellandur',
-    previously: 'Two startups, one exit',
-    skills: ['Product strategy', 'Payments', 'Growth'],
-    openToWork: false,
-    links: {},
-    character: 'pm',
-    path: [
-      [-6.4, -11],
-      [-6.4, -30],
-    ],
-    pause: 3,
-  },
-  {
-    id: 'aishwarya',
-    name: 'AISHWARYA DAS',
-    role: 'Design Systems Lead',
-    company: 'Sutra',
-    location: 'HSR Layout',
-    building: 'Open-source icon set',
-    skills: ['Design systems', 'Icons', 'Accessibility'],
-    openToWork: true,
-    links: {},
-    character: 'hero',
-    spot: { x: 20, z: 10.6, face: 0 },
-  },
-  {
-    id: 'farah',
-    status: { emoji: '', text: 'New in Bengaluru, say hi!', expiresAt: null },
-    name: 'FARAH KHAN',
-    role: 'Interaction Designer',
-    company: 'Orbit Forge',
-    location: 'Koramangala',
-    building: 'Mission-control UI',
-    skills: ['Interaction', 'Data viz', 'Spacetech'],
-    openToWork: false,
-    links: {},
-    character: 'moonshot',
-    spot: { x: 6.6, z: 16.6, face: 0 },
-  },
-  {
-    id: 'sam',
-    name: "SAM D'SOUZA",
-    role: 'Creative Technologist',
-    company: 'Byte Mela',
-    location: 'Koramangala',
-    building: 'Robots that sketch',
-    skills: ['Creative coding', 'Robotics', '3D'],
-    openToWork: true,
-    links: {},
-    character: 'bot',
-    spot: { x: 17.5, z: 23, face: -0.6 },
-  },
+  sample({ id: 's-maya', name: 'MAYA (SAMPLE)', role: 'Sample resident · Teacher', company: 'Fictional', location: 'Town Center', building: 'Weekend tutoring at the library', skills: ['Reading club', 'Science fair'], character: 'designer', status: { emoji: '📚', text: 'This is a sample person — real residents join with consent', expiresAt: null }, spot: at('town-center', 0) }),
+  sample({ id: 's-leo', name: 'LEO (SAMPLE)', role: 'Sample resident · Bakery owner', company: 'Fictional bakery', location: 'Town Center', skills: ['Sourdough', 'Small business'], character: 'maker', status: { emoji: '🥐', text: 'Ask me how a small shop works', expiresAt: null }, spot: at('town-center', 1) }),
+  sample({ id: 's-ana', name: 'ANA (SAMPLE)', role: 'Sample resident · Nurse', company: 'Fictional', location: 'Town Center', skills: ['Health', 'Running'], character: 'hero', spot: at('town-center', 2) }),
+  sample({ id: 's-raj', name: 'RAJ (SAMPLE)', role: 'Sample resident · Restaurant manager', company: 'Fictional', location: 'Route 9', skills: ['Hospitality', 'Hiring'], character: 'founder', status: { emoji: '🍽️', text: 'Route 9 has the most restaurants in town', expiresAt: null }, spot: at('route-9', 0) }),
+  sample({ id: 's-kim', name: 'KIM (SAMPLE)', role: 'Sample resident · Mechanic', company: 'Fictional garage', location: 'Route 9', skills: ['Cars', 'Apprenticeships'], character: 'developer', spot: at('route-9', 1) }),
+  sample({ id: 's-sofia', name: 'SOFIA (SAMPLE)', role: 'Sample resident · Rowing coach', company: 'Fictional', location: 'Lake Quinsigamond', skills: ['Rowing', 'Kayaks'], character: 'creative', status: { emoji: '🚣', text: 'The lake is 7 km long', expiresAt: null }, spot: at('lake-shore', 0) }),
+  sample({ id: 's-ben', name: 'BEN (SAMPLE)', role: 'Sample resident · Grocery clerk', company: 'Fictional', location: 'Route 20', skills: ['Customer service'], character: 'pm', spot: at('route-20', 0) }),
+  sample({ id: 's-ivy', name: 'IVY (SAMPLE)', role: 'Sample resident · Retired engineer', company: 'Fictional', location: 'North Shrewsbury', skills: ['Gardening', 'Town history'], character: 'investor', spot: at('north', 0) }),
+  sample({ id: 's-omar', name: 'OMAR (SAMPLE)', role: 'Sample resident · Electrician', company: 'Fictional', location: 'South Shrewsbury', skills: ['Trades', 'Solar'], character: 'moonshot', spot: at('south', 0) }),
 ]

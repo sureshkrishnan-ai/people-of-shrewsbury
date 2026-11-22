@@ -19,6 +19,8 @@ export type CityDistrict = {
   centre: [number, number]
   /** Half the side of the walkable square, metres. */
   half: number
+  /** The street you arrive on (pipeline picks its point nearest the centre). */
+  spawnStreet?: string | null
 }
 
 export const CITY = {
@@ -52,7 +54,7 @@ export const CITY = {
   },
   /** The map data credit shown on the title screen and the About page (ODbL requires it). */
   mapCredit: 'Map data © OpenStreetMap contributors (ODbL) · terrain USGS 3DEP',
-  districts: districtsJson.districts as CityDistrict[],
+  districts: districtsJson.districts as unknown as CityDistrict[],
   /** The district you start in. */
   defaultDistrict: 'town-center',
 } as const
@@ -75,4 +77,18 @@ function hourFormatter(timeZone: string) {
     formatters.set(timeZone, f)
   }
   return f
+}
+
+/** The district to open in: `?district=route-9` (shareable links, screenshots), else the default. */
+export function startDistrict(): string {
+  if (typeof window === 'undefined') return CITY.defaultDistrict
+  const q = new URLSearchParams(window.location.search).get('district')
+  return q && CITY.districts.some((d) => d.id === q) ? q : CITY.defaultDistrict
+}
+
+/** `?at=x,z[,face]`: start at that point of the district instead of its spawn. */
+export function startPose(): { x: number; z: number; face: number } | null {
+  if (typeof window === 'undefined') return null
+  const v = new URLSearchParams(window.location.search).get('at')?.split(',').map(Number)
+  return v && v.length >= 2 && v.every(Number.isFinite) ? { x: v[0], z: v[1], face: v[2] ?? 0 } : null
 }

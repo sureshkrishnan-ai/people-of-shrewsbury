@@ -2,7 +2,7 @@
 
 - ACS 5-year data profile (DP03/DP05) for the county subdivision "Shrewsbury town" (Worcester County).
 - County Business Patterns for ZIP 01545 (establishments by 2-digit NAICS).
-Writes public/tiles/census.json with source URLs, years and labels. Raw responses cached in data/raw/census/.
+Writes out/census.json with source URLs, years and labels. Raw responses cached in data/raw/census/.
 """
 import json, os, time, urllib.parse, urllib.request
 from common import RAW, OUT

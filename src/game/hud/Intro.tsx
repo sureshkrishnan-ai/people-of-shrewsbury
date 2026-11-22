@@ -81,7 +81,7 @@ export function Intro() {
             </>
           ) : (
             <button className="btn-primary slant" onClick={start} autoFocus>
-              <span className="unslant">{me ? `ENTER ${districtInfo(homeDistrict(me.location)).title} AS ${me.name.split(' ')[0].toUpperCase()} ▸` : 'ENTER KORAMANGALA ▸'}</span>
+              <span className="unslant">{me ? `ENTER ${districtInfo(homeDistrict(me.location)).title} AS ${me.name.split(' ')[0].toUpperCase()} ▸` : `ENTER ${districtInfo(useGame.getState().district).title} ▸`}</span>
             </button>
           )
         ) : (

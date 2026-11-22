@@ -1,12 +1,10 @@
 'use client'
 
 import { useGame } from '../store'
-import { World as KoramangalaWorld } from './World'
-import { HSRWorld } from '../districts/hsr/World'
+import { RealWorld } from '../districts/realmap/World'
 
-/** Only the active district is mounted — travelling unmounts the old one. */
+/** Only the active district is mounted — travelling unmounts the old one. Every district is a real-map one. */
 export function DistrictWorld() {
   const district = useGame((s) => s.district)
-  if (district === 'hsr') return <HSRWorld key="hsr" />
-  return <KoramangalaWorld key="koramangala" />
+  return <RealWorld key={district} id={district} />
 }

@@ -4,8 +4,8 @@ from pathlib import Path
 from pyproj import Transformer
 
 ROOT = Path(__file__).resolve().parent.parent
-RAW = Path(os.environ.get("SHREWSBURY_RAW", ROOT / "data" / "raw"))
-OUT = Path(os.environ.get("SHREWSBURY_OUT", ROOT / "data" / "out"))
+RAW = Path(os.environ.get("SHREWSBURY_RAW", ROOT / "pipeline" / "data" / "raw"))
+OUT = Path(os.environ.get("SHREWSBURY_OUT", ROOT / "pipeline" / "data" / "out"))
 EPSG = 32619  # WGS84 / UTM zone 19N
 to_utm = Transformer.from_crs(4326, EPSG, always_xy=True)
 to_ll = Transformer.from_crs(EPSG, 4326, always_xy=True)

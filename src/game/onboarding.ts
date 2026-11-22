@@ -1,3 +1,4 @@
+import { CITY } from '@/city/config'
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import { DEFAULT_CHARACTER, genderOf, type Gender } from './characters/roster'
@@ -85,7 +86,7 @@ const EMPTY: Draft = {
   portfolio: '',
   linkedin: '',
   x: '',
-  location: 'Koramangala',
+  location: CITY.districts.find((d) => d.id === CITY.defaultDistrict)!.name,
   spot: '',
   pendingSubmit: false,
   pendingInvite: '',

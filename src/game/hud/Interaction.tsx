@@ -35,7 +35,7 @@ function PortalPrompt({ onOpen }: { onOpen: () => void }) {
     <button className="prompt prompt--portal slant" onClick={onOpen}>
       <span className="unslant prompt-body">
         <span className="prompt-open">
-          <span className="warp-ring" /> PORTAL · ಪ್ರಯಾಣ
+          <span className="warp-ring" /> PORTAL
         </span>
         <span className="prompt-name">TRAVEL</span>
         <span className="prompt-role">Step through to another district</span>

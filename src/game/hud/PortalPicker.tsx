@@ -52,7 +52,7 @@ export function PortalPicker() {
           <span className="find-tag">
             <span className="warp-ring" /> WHERE TO?
           </span>
-          <span className="find-count">PORTAL · ಪ್ರಯಾಣ</span>
+          <span className="find-count">PORTAL</span>
           <button className="find-esc" onClick={close} aria-label="Close">
             <span className="keycap">ESC</span>
           </button>
@@ -92,7 +92,7 @@ export function PortalPicker() {
                     ) : (
                       <>
                         <span className="find-place warp-soon">COMING SOON</span>
-                        {n > 0 && <span className="find-dir">{n} waiting · visiting Koramangala</span>}
+                        {n > 0 && <span className="find-dir">{n} waiting · visiting the Town Center</span>}
                       </>
                     )}
                   </span>

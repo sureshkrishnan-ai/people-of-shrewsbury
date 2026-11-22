@@ -33,7 +33,13 @@ export type DistrictDef = {
   orbit: [number, number, number]
   /** Half the side of the walkable square (m). People of City's hand-built districts are all BOUNDS (46). */
   half?: number
+  /** Where (x, z) is, by name — a real-map district answers with the nearest street. Checked after landmarks. */
+  placeAt?: (x: number, z: number) => string | null
 }
+
+/** The HUD label for a point: a landmark you're near, the street you're on, or the district's area. */
+export const placeLabelAt = (d: DistrictDef, x: number, z: number) =>
+  d.landmarks.find((l) => Math.hypot(l.x - x, l.z - z) < l.r)?.label ?? d.placeAt?.(x, z) ?? d.area
 
 /** How far from the centre you can walk in this district. */
 export const halfOf = (d: DistrictDef) => d.half ?? LEGACY_HALF

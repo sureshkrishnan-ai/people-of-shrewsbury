@@ -146,7 +146,7 @@
    "trees": 16,
    "pois": 21,
    "streets": 22,
-   "bytes": 179266
+   "bytes": 179599
   },
   "route-9": {
    "buildings": 367,
@@ -156,7 +156,7 @@
    "trees": 76,
    "pois": 49,
    "streets": 40,
-   "bytes": 203816
+   "bytes": 204087
   },
   "lake-shore": {
    "buildings": 158,
@@ -166,7 +166,7 @@
    "trees": 582,
    "pois": 1,
    "streets": 10,
-   "bytes": 104679
+   "bytes": 104964
   },
   "route-20": {
    "buildings": 38,
@@ -176,7 +176,7 @@
    "trees": 1,
    "pois": 6,
    "streets": 7,
-   "bytes": 80325
+   "bytes": 80583
   },
   "north": {
    "buildings": 271,
@@ -186,7 +186,7 @@
    "trees": 2,
    "pois": 0,
    "streets": 22,
-   "bytes": 139512
+   "bytes": 139780
   },
   "south": {
    "buildings": 346,
@@ -196,7 +196,7 @@
    "trees": 0,
    "pois": 0,
    "streets": 23,
-   "bytes": 154576
+   "bytes": 154834
   }
  },
  "counts": {
@@ -210,6 +210,26 @@
   "road_segments": 23862,
   "road_km_bbox": 1840.5,
   "road_km_in_town": 1155.3,
+  "road_km_in_town_by_class": {
+   "service": 428.8,
+   "footway": 337.0,
+   "residential": 233.5,
+   "path": 26.6,
+   "secondary": 25.0,
+   "tertiary": 24.4,
+   "primary": 17.2,
+   "track": 15.8,
+   "trunk": 13.7,
+   "motorway": 13.2,
+   "unclassified": 10.6,
+   "motorway_link": 6.6,
+   "primary_link": 1.4,
+   "trunk_link": 1.0,
+   "steps": 0.3,
+   "cycleway": 0.3,
+   "secondary_link": 0.0,
+   "pedestrian": 0.0
+  },
   "water_polygons": 85,
   "trees": 14648,
   "pois": 362,

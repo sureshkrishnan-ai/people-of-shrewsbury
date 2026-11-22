@@ -1,5 +1,6 @@
 'use client'
 
+import { BusinessInteraction, EconomyLayer } from './hud/Businesses'
 import './districts' // registers every built district (must load first)
 import * as THREE from 'three'
 import { Suspense, useEffect } from 'react'
@@ -97,6 +98,8 @@ export default function Game() {
       {showQualityDebug && <QualityDebug />}
       <TouchControls />
       <Interaction />
+      <BusinessInteraction />
+      <EconomyLayer />
       <Tracker />
       <Search />
       <PortalPicker />

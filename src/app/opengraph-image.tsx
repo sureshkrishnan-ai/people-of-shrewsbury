@@ -1,3 +1,5 @@
+import { CITY } from '@/city/config'
+import { SITE_URL } from '@/lib/site'
 import { ImageResponse } from 'next/og'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -6,7 +8,7 @@ import { join } from 'node:path'
 // 800 italic caps. Built once at build time. A real in-game screenshot can replace it later:
 // drop an opengraph-image.png here and delete this file.
 
-export const alt = 'People of Bengaluru: walk the city, meet its designers and builders'
+export const alt = CITY.siteTitle
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
@@ -47,14 +49,14 @@ export default async function Image() {
             PEOPLE OF
           </div>
         </div>
-        <div style={{ display: 'flex', marginTop: 8, fontSize: 210, fontWeight: 800, fontStyle: 'italic', lineHeight: 0.9, textShadow: '0 10px 0 #0C0E16' }}>
-          BENGALURU
+        <div style={{ display: 'flex', marginTop: 8, fontSize: 180, fontWeight: 800, fontStyle: 'italic', lineHeight: 0.9, textShadow: '0 10px 0 #0C0E16' }}>
+          {CITY.titleWord}
         </div>
         <div style={{ display: 'flex', marginTop: 26, fontSize: 44, fontWeight: 600, color: 'rgba(255, 246, 229, 0.82)' }}>
-          Walk the city. Meet the designers and builders who live in it.
+          Walk the real town. Meet its people and local businesses.
         </div>
         <div style={{ display: 'flex', marginTop: 34, fontSize: 30, fontWeight: 600, letterSpacing: 4, color: '#3DDC84' }}>
-          PEOPLEOFBENGALURU.COM
+          {new URL(SITE_URL).hostname.toUpperCase()}
         </div>
       </div>
     ),

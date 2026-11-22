@@ -1,6 +1,5 @@
-import { BOUNDS } from '../layout'
 import { findPath } from '../nav'
-import { active, type Pose } from '../districts/active'
+import { active, halfOf, type Pose } from '../districts/active'
 import { districtOfLocation } from '../districts/registry'
 
 // Offline characters: they keep walking around their neighbourhood.
@@ -11,7 +10,11 @@ const WALK_MAX = 1.5
 const TURN_RATE = 2.6 // rad/s — calm, natural turns
 const VISITOR_RADIUS = 14
 
-const FULL = { minX: -BOUNDS + 3, maxX: BOUNDS - 3, minZ: -BOUNDS + 3, maxZ: BOUNDS - 3 }
+// Residents of a big real-map district stay within 60 m of where they started (the whole town is a long walk).
+const fullArea = () => {
+  const h = Math.min(halfOf(active.def), 60) - 3
+  return { minX: -h, maxX: h, minZ: -h, maxZ: h }
+}
 
 // Café break spots come from the loaded district (darshini tables, coconut cart, café fronts…).
 type Break = Pose
@@ -58,7 +61,7 @@ export class Wanderer {
     this.facing = facing
     // residents roam their whole district; visitors (district not built yet) stay near their spot
     const home = districtOfLocation(neighbourhood)
-    this.area = home.built && home.id === active.def.id ? FULL : { minX: x - VISITOR_RADIUS, maxX: x + VISITOR_RADIUS, minZ: z - VISITOR_RADIUS, maxZ: z + VISITOR_RADIUS }
+    this.area = home.built && home.id === active.def.id ? (halfOf(active.def) > 100 ? { minX: x - 45, maxX: x + 45, minZ: z - 45, maxZ: z + 45 } : fullArea()) : { minX: x - VISITOR_RADIUS, maxX: x + VISITOR_RADIUS, minZ: z - VISITOR_RADIUS, maxZ: z + VISITOR_RADIUS }
   }
 
   private pickDestination() {

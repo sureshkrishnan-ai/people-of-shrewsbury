@@ -35,6 +35,7 @@ import {
 import { requestLook } from "../player/input";
 import { useGame } from "../store";
 import { isTouch } from "../device";
+import { CITY } from "@/city/config";
 
 function Field({
   label,
@@ -113,7 +114,7 @@ function QuestionStep({ d, patch }: { d: Draft; patch: (p: Partial<Draft>) => vo
         label="YOUR ANSWER"
         value={d.appWhy}
         onChange={(appWhy) => patch({ appWhy })}
-        placeholder="I’ve been designing in Bengaluru for six years and…"
+        placeholder={CITY.examples.bio}
         max={ANSWER_MAX}
       />
       <span className="cr-q-private">ONLY THE REVIEWERS SEE THIS · NEVER SHOWN IN THE CITY</span>
@@ -483,7 +484,7 @@ function PayStep({ d }: { d: Draft }) {
 }
 
 const ELSEWHERE: { kind: Exclude<PlaceKind, "district">; title: string; placeholder: string; label: string }[] = [
-  { kind: "blr", title: "OTHER IN BENGALURU", placeholder: "Jayanagar, Indiranagar, Malleshwaram…", label: "WHICH AREA?" },
+  { kind: "blr", title: `OTHER IN ${CITY.titleWord}`, placeholder: CITY.examples.otherArea, label: "WHICH AREA?" },
   { kind: "city", title: "OTHER CITY", placeholder: "Pune, Mumbai, Delhi…", label: "WHICH CITY?" },
 ];
 
@@ -529,14 +530,14 @@ function HangoutStep({ d, patch }: { d: Draft; patch: (p: Partial<Draft>) => voi
       )}
       {district && !district.built && (
         <span className="cr-gender-note" style={{ margin: "8px 0 0" }}>
-          {district.title} isn’t built yet. You’ll be visiting Koramangala until it is.
+          {district.title} isn’t built yet. You’ll be visiting the Town Center until it is.
         </span>
       )}
       {other && (
         <span className="cr-gender-note" style={{ margin: "8px 0 0" }}>
           {kind === "city"
-            ? "You’ll be visiting Bengaluru: you’ll hang out in Koramangala."
-            : "Your area isn’t built yet. You’ll be visiting Koramangala until it is."}
+            ? `You’ll be visiting ${CITY.name}: you’ll hang out in ${CITY.districts[0].name}.`
+            : "Your area isn’t built yet. You’ll be visiting the Town Center until it is."}
         </span>
       )}
     </div>

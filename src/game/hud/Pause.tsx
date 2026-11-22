@@ -15,6 +15,7 @@ import { useCanSetStatus } from './StatusEditor'
 import { isTouch } from '../device'
 import { useMissions } from '../missionsStore'
 import { fullscreenMode, iphoneBrowser, isFullscreen, toggleFullscreen, type FullscreenMode } from '../fullscreen'
+import { CITY } from '@/city/config'
 
 /** The keys that apply to you right now (keyboard only: phones have no CONTROLS section). */
 function controlsFor(o: { member: boolean; hasProfile: boolean; signedIn: boolean; canStatus: boolean }): [string[], string][] {
@@ -322,7 +323,7 @@ function HomeScreenSteps() {
         <li>
           Keep <b>Open as Web App</b> on, then tap <b>Add</b>.
         </li>
-        <li>Open Bengaluru from your home screen.</li>
+        <li>Open {CITY.name} from your home screen.</li>
       </ol>
     </>
   )

@@ -1,11 +1,13 @@
+import { CITY } from '@/city/config'
 // The public face of the site: its address, name and what search engines may do with it.
 // Server-side only where it matters (VERCEL_ENV isn't sent to the browser).
 
 /** The one address search engines should know. Every other host (dev, previews, *.vercel.app) is noindex. */
-export const SITE_URL = 'https://peopleofbengaluru.com'
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || CITY.url
 
 /** The review queue lives on its own subdomain (src/proxy.ts): production, dev (staging data), and local (admin.localhost). */
-export const ADMIN_HOSTS = ['admin.peopleofbengaluru.com', 'dev.admin.peopleofbengaluru.com', 'admin.localhost']
+const HOST = new URL(SITE_URL).hostname
+export const ADMIN_HOSTS = [`admin.${HOST}`, `dev.admin.${HOST}`, 'admin.localhost']
 
 /** The game this page belongs to (browser only): admin.x → x, dev.admin.x → dev.x (same scheme and port), else this origin. */
 export function gameOrigin() {
@@ -15,14 +17,13 @@ export function gameOrigin() {
 }
 
 /** The public sites' hosts, where /admin doesn't exist. */
-export const PUBLIC_HOSTS = ['peopleofbengaluru.com', 'www.peopleofbengaluru.com', 'dev.peopleofbengaluru.com']
+export const PUBLIC_HOSTS = [HOST, `www.${HOST}`, `dev.${HOST}`]
 
-export const SITE_NAME = 'People of Bengaluru'
+export const SITE_NAME = CITY.siteName
 
-export const SITE_TITLE = 'People of Bengaluru — walk the city, meet its designers and builders'
+export const SITE_TITLE = CITY.siteTitle
 
-export const SITE_DESCRIPTION =
-  'A stylised 3D Bengaluru you can walk through. Every character is a real designer or builder: find them in Koramangala and HSR Layout, see what they’re building, and say hi.'
+export const SITE_DESCRIPTION = CITY.siteDescription
 
 /** Google Analytics 4 measurement ID, e.g. 'G-XXXXXXXXXX'. Empty: no analytics. Loads only on production (see ANALYTICS_ON). */
 export const GA_ID = ''

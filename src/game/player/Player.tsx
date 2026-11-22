@@ -4,9 +4,8 @@ import * as THREE from 'three'
 import { Suspense, useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
-import { BOUNDS } from '../layout'
 import { RUN, WALK } from '@shared/net/config'
-import { active } from '../districts/active'
+import { active, halfOf } from '../districts/active'
 import { useGame } from '../store'
 import { Avatar, type AvatarState } from '../characters/Avatar'
 import { camRef, installInput, keys, look, stick } from './input'
@@ -217,8 +216,9 @@ export function Player() {
     s.pos.addScaledVector(s.vel, dt)
     resolveBodies(s.pos, RADIUS)
     resolveCircle(s.pos, RADIUS)
-    s.pos.x = THREE.MathUtils.clamp(s.pos.x, -BOUNDS, BOUNDS)
-    s.pos.z = THREE.MathUtils.clamp(s.pos.z, -BOUNDS, BOUNDS)
+    const half = halfOf(active.def)
+    s.pos.x = THREE.MathUtils.clamp(s.pos.x, -half, half)
+    s.pos.z = THREE.MathUtils.clamp(s.pos.z, -half, half)
     s.pos.y = damp(s.pos.y, active.def.ground(s.pos.x, s.pos.z), 20, dt)
 
     const speed = Math.hypot(s.vel.x, s.vel.z)

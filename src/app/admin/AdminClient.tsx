@@ -7,6 +7,7 @@ import './admin.css'
 import { InvitesAdmin } from './InvitesAdmin'
 import { gameOrigin } from '@/lib/site'
 import { placeLabel } from '@/game/districts/registry'
+import { CITY } from '@/city/config'
 
 // THE REVIEW QUEUE (CLAUDE.md 5E-B). Admins only (public.admins).
 // ACCEPT → /api/admin/approve: approve_application() (profile goes live, invite codes issued) + the email.
@@ -209,7 +210,7 @@ export default function AdminClient() {
       <header className="adm-top">
         <div className="adm-badge slant">
           <span className="unslant">
-            <small>PEOPLE OF BENGALURU</small>
+            <small>{CITY.siteName.toUpperCase()}</small>
             <b>REVIEW QUEUE</b>
           </span>
         </div>

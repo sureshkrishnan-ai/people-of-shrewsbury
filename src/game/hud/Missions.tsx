@@ -126,7 +126,7 @@ export function Missions() {
                 </span>
                 {on && (
                   <span className="ms-hint">
-                    {m.id === 'cross' ? `Take the portal to ${district === 'hsr' ? 'Koramangala' : 'HSR Layout'}.` : m.hint}
+                    {m.id === 'cross' ? `Take the portal to another district.` : m.hint}
                   </span>
                 )}
               </span>

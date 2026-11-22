@@ -1,8 +1,8 @@
 // LIVE CITY (CLAUDE.md Phase 8A) — numbers shared by the game (src/game/net) and the room server (realtime/).
 // Plain TypeScript only: no `@/` imports, no DOM, no Node — both builds compile this folder.
 
-/** Districts that have rooms (the built ones, src/game/districts/registry.ts). */
-export const ROOM_DISTRICTS = ['koramangala', 'hsr'] as const
+/** Districts that have rooms: the ids in src/city/districts.json (a test keeps the two in sync). */
+export const ROOM_DISTRICTS = ['town-center', 'route-9', 'lake-shore', 'route-20', 'north', 'south'] as const
 export type RoomDistrict = (typeof ROOM_DISTRICTS)[number]
 
 /** Server ticks per second while anyone is moving. */
@@ -19,8 +19,12 @@ export const INTEREST_DROP_R = 44
 export const ROOM_CAP = 150
 export const ROOM_HARD_CAP = 160
 
-/** Every district is the same square (src/game/layout.ts). */
-export const BOUNDS = 46
+/**
+ * The furthest anyone can be from a district's centre (m). People of City's districts were all a 46 m square;
+ * real-map districts differ in size (src/city/districts.json `half`), so this is the largest of them plus slack.
+ * The game clamps to each district's own `half` (districts/active.ts `half`).
+ */
+export const BOUNDS = 400
 
 /** Player speeds, m/s (src/game/player/Player.tsx). */
 export const WALK = 3.0
@@ -73,7 +77,7 @@ export const CLOSE = {
 /** "koramangala#2" — district plus shard number (1-based). */
 export const roomName = (d: RoomDistrict, shard: number) => `${d}#${shard}`
 export function parseRoom(name: string): { district: RoomDistrict; shard: number } | null {
-  const m = /^([a-z]+)#([1-9]\d{0,2})$/.exec(name)
+  const m = /^([a-z0-9-]+)#([1-9]\d{0,2})$/.exec(name)
   if (!m || !(ROOM_DISTRICTS as readonly string[]).includes(m[1])) return null
   return { district: m[1] as RoomDistrict, shard: Number(m[2]) }
 }

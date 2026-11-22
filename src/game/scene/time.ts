@@ -1,12 +1,12 @@
 import { create } from 'zustand'
-import { bengaluruHour, lookAt, parseTime, type Look } from './daylight'
+import { localHour, lookAt, parseTime, type Look } from './daylight'
 
 // The city's clock (design.md §7.3): Bengaluru's real time, so it's night in the game when it's night
 // in the city. "?time=19:30" freezes the clock at that hour (for trying the looks and screenshots).
 
 const fixed = typeof window === 'undefined' ? null : parseTime(new URLSearchParams(window.location.search).get('time'))
 
-const hourNow = () => fixed ?? bengaluruHour(Date.now())
+const hourNow = () => fixed ?? localHour(Date.now())
 
 /**
  * The current look, read every frame by the lights, sky, fog and the night lights. Recomputed at most

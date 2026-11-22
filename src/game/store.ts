@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { activateDistrict } from './districts/active'
 import type { DistrictId } from './districts/registry'
+import { CITY } from '@/city/config'
 
 type Phase = 'intro' | 'create' | 'play'
 
@@ -98,7 +99,7 @@ export const useGame = create<GameState>((set) => ({
   trackStage: null,
   trackT0: 0,
   toast: null,
-  district: 'koramangala',
+  district: CITY.defaultDistrict,
   portalOpen: false,
   nearPortal: false,
   travel: null,

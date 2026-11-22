@@ -19,9 +19,9 @@ import { parseRoom, roomName } from './config'
 const uid = '0b1c2d3e-4f50-6172-8394-a5b6c7d8e9f0'
 
 describe('game → room', () => {
-  it('round-trips a position (cm, 1/256 turn)', () => {
+  it('round-trips a position (2 cm, 1/256 turn)', () => {
     const m = decodeClient(encodePos({ x: 12.345, z: -45.99, yaw: Math.PI / 2, anim: 2 }))
-    expect(m).toMatchObject({ op: Op.Pos, x: 12.35, z: -45.99, anim: 2 })
+    expect(m).toMatchObject({ op: Op.Pos, x: 12.34, z: -45.98, anim: 2 })
     if (m?.op !== Op.Pos) throw new Error()
     expect(m.yaw).toBeCloseTo(Math.PI / 2, 1)
   })
@@ -58,7 +58,7 @@ describe('room → game', () => {
       op: Op.Snap,
       tick: 12,
       entries: [
-        { slot: 1, x: 3.21, z: -4, anim: 1, gone: false },
+        { slot: 1, x: 3.22, z: -4, anim: 1, gone: false },
         { slot: 2, gone: true },
       ],
     })
@@ -78,11 +78,18 @@ describe('room → game', () => {
   })
 })
 
+describe('real-map districts', () => {
+  it('reach the edge of the largest district', () => {
+    const m = decodeClient(encodePos({ x: 399.5, z: -399.5, yaw: 0, anim: 0 }))
+    expect(m).toMatchObject({ x: 399.5, z: -399.5 })
+  })
+})
+
 describe('room names', () => {
   it('round-trips and refuses unknown districts', () => {
-    expect(parseRoom(roomName('hsr', 2))).toEqual({ district: 'hsr', shard: 2 })
+    expect(parseRoom(roomName('route-9', 2))).toEqual({ district: 'route-9', shard: 2 })
     expect(parseRoom('whitefield#1')).toBeNull()
     expect(parseRoom('koramangala#0')).toBeNull()
-    expect(parseRoom('koramangala')).toBeNull()
+    expect(parseRoom('town-center')).toBeNull()
   })
 })

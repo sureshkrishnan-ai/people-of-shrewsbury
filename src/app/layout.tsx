@@ -3,6 +3,7 @@ import { Barlow, Barlow_Condensed, Noto_Sans_Kannada } from 'next/font/google'
 import { GoogleAnalytics } from '@next/third-parties/google'
 import { ANALYTICS_ON, GA_ID, IS_PRODUCTION, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from '@/lib/site'
 import './globals.css'
+import { CITY } from '@/city/config'
 
 const display = Barlow_Condensed({
   subsets: ['latin'],
@@ -29,7 +30,7 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION,
   applicationName: SITE_NAME,
   // added to the iPhone home screen, the city opens full screen without Safari's bars (Phase 6B)
-  appleWebApp: { capable: true, title: 'Bengaluru', statusBarStyle: 'black-translucent' },
+  appleWebApp: { capable: true, title: CITY.name, statusBarStyle: 'black-translucent' },
   // every ?invite= / ?connections / preview link is the same page
   alternates: { canonical: '/' },
   openGraph: {

@@ -7,6 +7,7 @@ import { InvitesHud } from './Invites'
 import { Missions } from './Missions'
 import { useClock } from '../scene/time'
 import { clockText, phaseAt } from '../scene/daylight'
+import { CITY } from '@/city/config'
 
 function Keycap({ k, wide }: { k: string; wide?: boolean }) {
   return <span className={`keycap${wide ? ' keycap--wide' : ''}`}>{k}</span>
@@ -20,7 +21,7 @@ export function HUD() {
   const talking = useGame((s) => !!s.openId || s.searchOpen || s.paused || s.connectOpen || s.invitesOpen || s.profileOpen)
   const district = useGame((s) => s.district)
   const info = districtInfo(district)
-  // Bengaluru's time, the same clock the light runs on
+  // the city's time, the same clock the light runs on
   const hour = useClock((s) => s.hour)
 
   if (phase !== 'play') return null
@@ -30,7 +31,7 @@ export function HUD() {
       <div className="hud-location">
         <div className="slant panel">
           <div className="unslant">
-            <div className="hud-city">BENGALURU</div>
+            <div className="hud-city">{CITY.titleWord}</div>
             <div className="hud-district">{info.title}</div>
           </div>
         </div>
@@ -50,7 +51,7 @@ export function HUD() {
             </span>
           </button>
         </div>
-        <div className="slant hud-weather" title="Time in Bengaluru">
+        <div className="slant hud-weather" title={`Time in ${CITY.name}`}>
           <span className="unslant">
             {phaseAt(hour) === 'night' ? '☾' : '☀'} {clockText(hour)}
           </span>

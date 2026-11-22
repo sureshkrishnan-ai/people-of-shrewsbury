@@ -35,8 +35,10 @@ export type ClientMsg = { op: typeof Op.Hello; token: string } | ({ op: typeof O
 // ---- quantization ----
 
 const TAU = Math.PI * 2
-export const qPos = (m: number) => Math.max(-32768, Math.min(32767, Math.round(m * 100)))
-export const dqPos = (q: number) => q / 100
+/** Positions travel in 2 cm steps (int16 → ±655 m), so real-map districts (up to BOUNDS = 400 m) fit. People of City used 1 cm (±327 m). */
+export const POS_SCALE = 50
+export const qPos = (m: number) => Math.max(-32768, Math.min(32767, Math.round(m * POS_SCALE)))
+export const dqPos = (q: number) => q / POS_SCALE
 export const qYaw = (rad: number) => ((Math.round((rad / TAU) * 256) % 256) + 256) % 256
 export const dqYaw = (q: number) => (q / 256) * TAU
 const flagsOf = (anim: Anim, gone = false) => (anim & 0b11) | (gone ? FLAG_GONE : 0)

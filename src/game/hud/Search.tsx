@@ -10,6 +10,7 @@ import { useGame } from '../store'
 import { activeStatus } from '../status'
 import { isTouch } from '../device'
 import { districtInfo, homeDistrict } from '../districts/registry'
+import { CITY } from '@/city/config'
 
 const EXAMPLES = ['design engineer', 'open to work', 'Indiranagar', 'design systems', 'founder']
 
@@ -129,7 +130,7 @@ export function Search() {
           <span className="find-tag">
             <span className="find-glass" /> FIND SOMEONE IN THE CITY
           </span>
-          <span className="find-count">{people.length} PEOPLE ACROSS BENGALURU</span>
+          <span className="find-count">{people.length} PEOPLE ACROSS {CITY.titleWord}</span>
           <button className="find-esc" onClick={() => setSearch(false)} aria-label="Close search">
             <span className="keycap">ESC</span>
           </button>

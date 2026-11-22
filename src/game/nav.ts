@@ -1,14 +1,20 @@
-import { BOUNDS } from './layout'
-import { active } from './districts/active'
+import { active, halfOf } from './districts/active'
 
 // Walkability grid + A* over the district, for "take me to them".
 
-const CELL = 0.75
-const HALF = BOUNDS
-const N = Math.ceil((HALF * 2) / CELL)
+// Grid size follows the district: 0.75 m cells for the small hand-built ones, 1.5 m for real-map ones.
+let CELL = 0.75
+let HALF = 46
+let N = Math.ceil((HALF * 2) / CELL)
 const INFLATE = 0.45
 
-const grids = new Map<string, Uint8Array>()
+const grids = new Map<string, { g: Uint8Array; n: number; cell: number; half: number; count: number }>()
+
+function setGrid(half: number) {
+  HALF = half
+  CELL = half > 100 ? 1.5 : 0.75
+  N = Math.ceil((HALF * 2) / CELL)
+}
 
 function build() {
   const g = new Uint8Array(N * N)
@@ -51,8 +57,14 @@ function lineOfSight(g: Uint8Array, ax: number, az: number, bx: number, bz: numb
 
 /** Grid A* (8-way, no corner cutting) + line-of-sight smoothing. Returns world XZ waypoints. */
 export function findPath(fx: number, fz: number, tx: number, tz: number): [number, number][] | null {
-  let g = grids.get(active.def.id)
-  if (!g) grids.set(active.def.id, (g = build()))
+  let rec = grids.get(active.def.id)
+  if (!rec || rec.count !== active.def.colliders.length) {
+    setGrid(halfOf(active.def))
+    rec = { g: build(), n: N, cell: CELL, half: HALF, count: active.def.colliders.length }
+    grids.set(active.def.id, rec)
+  }
+  ;({ n: N, cell: CELL, half: HALF } = rec)
+  const g = rec.g
   const s = nearestFree(g, cell(fx), cell(fz))
   const e = nearestFree(g, cell(tx), cell(tz))
   if (!s || !e) return null

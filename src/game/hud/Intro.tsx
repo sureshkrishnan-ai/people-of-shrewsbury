@@ -1,5 +1,6 @@
 'use client'
 
+import { CITY } from '@/city/config'
 import { useEffect } from 'react'
 import { useProgress } from '@react-three/drei'
 import { useGame } from '../store'
@@ -57,13 +58,13 @@ export function Intro() {
           <div className="intro-kicker">YOU’RE INVITED</div>
           <h1>{inviter.name.split(' ')[0].toUpperCase()} INVITED YOU</h1>
           {inviter.role && <p className="intro-invite-role">{inviter.role}</p>}
-          <p>Walk the city of designers and builders. When you’re ready, you go live — no review.</p>
+          <p>Walk the town, its people and its local businesses. When you’re ready, you go live — no review.</p>
         </div>
       ) : (
         <div className="intro-title">
           <div className="intro-kicker">PEOPLE OF</div>
-          <h1>BENGALURU</h1>
-          <p>Walk the city. Meet the people who design it.</p>
+          <h1>{CITY.titleWord}</h1>
+          <p>{CITY.tagline}</p>
           {!me && <p className="intro-note">You’ll arrive invisible — become visible whenever you’re ready.</p>}
         </div>
       )}

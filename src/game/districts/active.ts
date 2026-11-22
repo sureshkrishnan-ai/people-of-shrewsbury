@@ -31,6 +31,49 @@ export type DistrictDef = {
   radio: [number, number, number] | null
   /** Camera orbit centre for the intro screen. */
   orbit: [number, number, number]
+  /** Half the side of the walkable square (m). People of City's hand-built districts are all BOUNDS (46). */
+  half?: number
+}
+
+/** How far from the centre you can walk in this district. */
+export const halfOf = (d: DistrictDef) => d.half ?? LEGACY_HALF
+const LEGACY_HALF = 46
+
+// ---- collider index -------------------------------------------------------------------------------
+// The hand-built districts have a few hundred boxes; a real-map district has thousands, so collision and
+// camera checks look colliders up in a coarse grid instead of scanning them all. Rebuilt when the
+// list changes (a real-map district fills its colliders after its data loads).
+
+const IDX_CELL = 12
+type Index = { n: number; cells: Map<number, AABB[]> }
+const indexes = new WeakMap<DistrictDef, Index>()
+const key = (i: number, j: number) => i * 100_003 + j
+
+function indexOf(d: DistrictDef): Index {
+  let ix = indexes.get(d)
+  if (ix && ix.n === d.colliders.length) return ix
+  ix = { n: d.colliders.length, cells: new Map() }
+  for (const b of d.colliders) {
+    for (let i = Math.floor(b.min[0] / IDX_CELL); i <= Math.floor(b.max[0] / IDX_CELL); i++)
+      for (let j = Math.floor(b.min[2] / IDX_CELL); j <= Math.floor(b.max[2] / IDX_CELL); j++) {
+        const k = key(i, j)
+        const list = ix.cells.get(k)
+        if (list) list.push(b)
+        else ix.cells.set(k, [b])
+      }
+  }
+  indexes.set(d, ix)
+  return ix
+}
+
+/** The colliders that may touch the square of radius r around (x, z) — a superset, each box once. */
+export function collidersNear(x: number, z: number, r: number, d: DistrictDef = active.def): AABB[] {
+  if (d.colliders.length < 400) return d.colliders
+  const ix = indexOf(d)
+  const out = new Set<AABB>()
+  for (let i = Math.floor((x - r) / IDX_CELL); i <= Math.floor((x + r) / IDX_CELL); i++)
+    for (let j = Math.floor((z - r) / IDX_CELL); j <= Math.floor((z + r) / IDX_CELL); j++) ix.cells.get(key(i, j))?.forEach((b) => out.add(b))
+  return [...out]
 }
 
 const registry = new Map<DistrictId, DistrictDef>()

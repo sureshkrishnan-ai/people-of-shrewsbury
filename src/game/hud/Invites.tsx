@@ -7,6 +7,7 @@ import { requestLook } from '../player/input'
 import { YouShell, YouTabs } from './YouPanel'
 import { useGame } from '../store'
 import { isTouch } from '../device'
+import { CITY } from '@/city/config'
 
 // YOUR INVITES (CLAUDE.md Phase 5D) — the ticket in the HUD, I, the INVITES button on your card, or the pause menu.
 // design.md §10: an ink panel over the live street, one chunky slanted card per slot.
@@ -32,7 +33,7 @@ async function hand(s: Slot) {
   if (canShare()) {
     try {
       await navigator.share({
-        title: 'People of Bengaluru',
+        title: CITY.siteName,
         text: 'You’re invited to the city of designers and builders.',
         url,
       })

@@ -1,0 +1,11 @@
+{
+  "_note": "Shared by the game (src/city/config.ts) and the map pipeline (pipeline/districts.py). centre = pipeline local metres (x east, y north; see pipeline/README.md). half = half the side of the square walked, in metres.",
+  "districts": [
+    { "id": "town-center", "name": "Town Center", "title": "TOWN CENTER", "identity": "Main Street · Town Common · Town Hall", "accent": "#B5452F", "centre": [5300, 6800], "half": 340 },
+    { "id": "route-9", "name": "Route 9", "title": "ROUTE 9", "identity": "Boston Turnpike · White City · shops and restaurants", "accent": "#2F6DB5", "centre": [2450, 4620], "half": 380 },
+    { "id": "lake-shore", "name": "Lake Quinsigamond", "title": "LAKE QUINSIGAMOND", "identity": "North Quinsigamond Avenue · the lake shore", "accent": "#1F8A9A", "centre": [2080, 5900], "half": 340 },
+    { "id": "route-20", "name": "Route 20", "title": "ROUTE 20", "identity": "Hartford Turnpike · Flint Pond · plazas", "accent": "#C07A1C", "centre": [4300, 1420], "half": 340 },
+    { "id": "north", "name": "North Shrewsbury", "title": "NORTH SHREWSBURY", "identity": "Residential streets north of the centre", "accent": "#4E7D3A", "centre": [5700, 8150], "half": 330 },
+    { "id": "south", "name": "South Shrewsbury", "title": "SOUTH SHREWSBURY", "identity": "Residential streets south of Route 9", "accent": "#7A5BA8", "centre": [3000, 3050], "half": 340 }
+  ]
+}

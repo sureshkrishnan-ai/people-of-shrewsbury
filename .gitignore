@@ -22,3 +22,9 @@ skills-lock.json
 .vercel
 .wrangler/
 .dev.vars
+
+# map pipeline caches and intermediate outputs
+pipeline/data/
+pipeline/__pycache__/
+data/raw/
+data/out/

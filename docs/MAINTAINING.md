@@ -19,9 +19,10 @@ The routine jobs, in order of how often you'll do them. Read [ROADMAP.md](../ROA
 - Interiors (future): written permission from the owner/department + their review sign-off, same folder.
 
 ## Adding a business by hand (no database yet, or an owner emailed you)
-- On OpenStreetMap already? It's in the town. To add a story without Supabase, add an entry to `OWNER_STORIES` in a new
-  `src/city/data/owner-stories.json` and merge it with `mergeOwnerProfiles` (src/city/businesses.ts) — keep the
-  consent email.
+- On OpenStreetMap already? It's in the town. To add the owner's story: Supabase → Table editor → `businesses` →
+  insert a row with `osm_id` (the `id` in `src/city/data/businesses.json`, e.g. `osm-n739861173`), `owner_id` (your
+  admin user), the story fields, `consent_version = 'business-v1-email'`, `status = approved`; keep the owner's email
+  in the consent folder. (No database at all: v0 shows OSM listings only — that's by design.)
 - Not on OSM? Best: add it on openstreetmap.org (correct tags, e.g. `shop=bakery`), wait for the next map refresh.
 
 ## Adding a resident

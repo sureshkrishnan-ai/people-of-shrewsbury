@@ -53,6 +53,25 @@ Where it hooks in (already reserved, ignored by v0): the `interior` field on a b
 becomes a walk-up prompt like the business cards (`src/game/hud/Businesses.tsx`), and "Go inside" would reuse the portal
 travel (`startTravel`) with an interior scene in place of `RealWorld`.
 
+## View the town on Meta Quest (WebXR) (planned — not in v0)
+- **Enter VR** button in the Quest Browser (three.js WebXR via `@react-three/xr`), shown only when
+  `navigator.xr.isSessionSupported('immersive-vr')` says yes.
+- Movement: thumbstick walk, teleport arc, snap turn (comfort first); life-size street level (1 unit = 1 m already).
+- Name plates and business cards readable in VR: world-space panels instead of DOM overlays (drei `<Html>` and the HUD
+  don't render inside an XR session).
+- Quest performance profile: no heavy post-processing (N8AO, bloom off), shorter fog / LOD distance, lower tree cap and
+  2048 ground texture (the `low` quality level already does most of this), fixed foveation, 72 fps target.
+- Later: AR/passthrough **table-top Shrewsbury** — the district at 1:500 on a real table (the pipeline's `overview.json`
+  + district files are already scale-free); interiors and video tours in VR.
+
+Code choices that keep this cheap later:
+- Keep movement intent separate from devices: `player/input.ts` turns keys/mouse/touch into move + look intents; a VR
+  controller source should feed the same intents rather than adding a new movement path in `Player.tsx`.
+- Keep UI that must work in VR (name cards, business cards) driven by data in stores (`useEconomy`, business lookups in
+  `src/city/businesses.ts`), so a world-space panel can render the same data as the DOM card.
+- Quality settings live in `device.ts` profiles — add an `xr` profile there, not ad-hoc checks.
+- Real-map districts are already a few merged meshes + instancing (~10 draw calls), which suits Quest.
+
 ## Business growth
 - Owner photo uploads (Supabase Storage, size limits, review queue).
 - "Open now" from OSM `opening_hours`; a weekly "new on Main Street" spotlight.

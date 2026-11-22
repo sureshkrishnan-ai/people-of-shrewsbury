@@ -87,10 +87,16 @@ export function Intro() {
         ) : (
           <div className="loader slant">
             <div className="loader-fill" style={{ width: `${pct}%` }} />
-            <span className="unslant loader-label">PAINTING THE CITY… {pct}%</span>
+            <span className="unslant loader-label">PAINTING THE TOWN… {pct}%</span>
           </div>
         )}
       </div>
+      <nav className="intro-links">
+        <a href="/economy">LOCAL ECONOMY</a>
+        <a href="/for-businesses">FOR BUSINESSES</a>
+        <a href="/about">ABOUT</a>
+        <span className="intro-credit">{CITY.mapCredit}</span>
+      </nav>
     </div>
   )
 }

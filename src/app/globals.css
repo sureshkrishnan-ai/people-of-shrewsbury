@@ -7341,3 +7341,41 @@ html.touch .pause-row--primary:focus-visible {
   .econ-panel { top: auto; bottom: 220px; right: 16px; width: calc(100vw - 32px); max-height: 40vh; overflow: auto; }
   .biz-card { right: 16px; bottom: 160px; }
 }
+
+/* ---- site pages (economy, for businesses, about) --------------------------------------------- */
+.site-page { position: fixed; inset: 0; overflow-y: auto; background: var(--cream); color: var(--ink); font-family: var(--font-body, 'Barlow'), system-ui, sans-serif; cursor: auto; }
+.site-page a { color: #B5452F; cursor: pointer; }
+.site-head { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between; padding: 14px 16px; background: var(--ink); color: var(--cream); }
+.site-brand { color: var(--cream) !important; text-decoration: none; font-weight: 800; font-style: italic; font-size: 22px; letter-spacing: 1px; }
+.site-brand-of { color: var(--saffron); font-size: 14px; }
+.site-nav { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.site-nav a { color: var(--cream) !important; text-decoration: none; font-weight: 600; }
+.site-main { max-width: 920px; margin: 0 auto; padding: 28px 16px 40px; }
+.site-kicker { color: #B5452F; font-weight: 800; font-style: italic; letter-spacing: 2px; font-size: 14px; }
+.site-title { font-weight: 800; font-style: italic; font-size: clamp(34px, 7vw, 56px); line-height: 1; margin: 6px 0 18px; text-transform: uppercase; }
+.site-main h2 { font-weight: 800; font-style: italic; text-transform: uppercase; font-size: 24px; margin: 34px 0 8px; }
+.site-main p, .site-main li { font-size: 17px; line-height: 1.55; }
+.site-note { font-size: 14px !important; color: #5A5E6E; }
+.site-card { background: #fff; border-left: 6px solid var(--saffron); padding: 14px 16px; margin: 14px 0; box-shadow: 0 2px 0 rgba(12, 14, 22, 0.12); }
+.site-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.stat { background: #fff; padding: 14px 16px; box-shadow: 0 2px 0 rgba(12, 14, 22, 0.12); }
+.stat-n { font-size: 40px; font-weight: 800; font-style: italic; line-height: 1; }
+.stat-l { font-size: 14px; color: #5A5E6E; margin-top: 4px; }
+.stat-src { font-size: 12px; color: #7A7E8C; margin-top: 6px; }
+.stat--placeholder .stat-n { color: #9A9EAC; }
+.bars { width: 100%; border-collapse: collapse; }
+.bars th { text-align: left; font-weight: 600; font-size: 15px; padding: 4px 10px 4px 0; white-space: nowrap; width: 1%; }
+.bars td { padding: 4px 0; }
+.bars .bar { display: block; height: 14px; background: #2F6DB5; border-radius: 0 4px 4px 0; min-width: 2px; }
+.bars .bar-v { width: 3em; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; padding-left: 8px; }
+.site-foot { padding: 18px 16px 28px; text-align: center; font-size: 13px; color: #5A5E6E; border-top: 1px solid rgba(28, 31, 43, 0.12); }
+.site-main pre { background: #fff; padding: 14px; overflow-x: auto; font-size: 14px; line-height: 1.5; white-space: pre-wrap; }
+.biz-form label { display: flex; flex-direction: column; gap: 4px; margin: 0 0 12px; font-weight: 600; font-size: 15px; }
+.biz-form input, .biz-form select, .biz-form textarea { font: inherit; font-weight: 400; padding: 8px 10px; border: 1px solid #C9C3B5; background: #FFFDF8; }
+.biz-form .biz-consent { flex-direction: row; align-items: flex-start; gap: 8px; font-weight: 400; }
+.biz-form .btn-primary { padding: 10px 18px; border: 0; cursor: pointer; }
+.intro-links { position: absolute; right: 24px; bottom: 22px; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px 16px; align-items: center; z-index: 2; pointer-events: auto; max-width: calc(100vw - 32px); }
+.intro-links a { color: var(--cream); font-weight: 800; font-style: italic; letter-spacing: 1px; font-size: 14px; text-decoration: none; text-shadow: 0 2px 0 rgba(12, 14, 22, 0.6); }
+.intro-links a:hover { color: var(--saffron); }
+.intro-credit { width: 100%; text-align: right; font-size: 11px; color: rgba(255, 246, 229, 0.7); }
+@media (max-width: 700px) { .intro-links { right: 16px; bottom: 8px; } .intro-links a { font-size: 12px; } }

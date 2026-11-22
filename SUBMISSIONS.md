@@ -1,5 +1,12 @@
 # Showcase your city
 
+> **People of Shrewsbury:** this fork's own consent rules for residents and businesses are in
+> [docs/MAINTAINING.md](docs/MAINTAINING.md) (review queue, consent records) and
+> [docs/consent/business-v1.md](docs/consent/business-v1.md). Our showcase post upstream would use the title
+> `City: People of Shrewsbury`, with screenshots of the Town Center, Route 9 and Lake Quinsigamond and no personal
+> details of any child involved. The text below is the foundation's.
+
+
 Built a city on the People of City foundation? We want to see it.
 
 Exceptional projects may be invited to collaborate on the larger People of City ecosystem. **Submitting doesn't guarantee inclusion**: every submission is read, but only some will be selected.

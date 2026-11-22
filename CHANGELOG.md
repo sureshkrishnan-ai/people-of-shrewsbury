@@ -4,6 +4,20 @@ All notable changes to the People of City foundation are recorded here. The form
 
 ## [Unreleased]
 
+### People of Shrewsbury (fork, branch `shrewsbury`)
+#### Added
+- City config `src/city/` (name, domain placeholder, America/New_York clock with daylight saving, districts, labels, map credit).
+- Map pipeline `pipeline/` (OSM + USGS 3DEP, optional Census) and `districts.py` → six real-map districts in `public/districts/`.
+- Real-map district renderer (`src/game/districts/realmap/`): draped terrain with painted streets and street names, extruded
+  buildings with gable/flat roofs, instanced trees, lakes, business signs; HUD shows the street you're on; `?district=` / `?at=`.
+- Business side: OSM business cards, economy layer (X), `/economy`, `/for-businesses` (consent v1 + owner form), `/about`,
+  Supabase `businesses` table with RLS, owner interview template.
+- Docs: ROADMAP.md, docs/MAINTAINING.md, docs/DEPLOYING.md.
+#### Changed
+- Districts can be any size (`DistrictDef.half`); colliders indexed in a grid; nav grid scales with the district.
+- Live city: positions in 2 cm steps (±655 m), `BOUNDS` 400, room ids from the city config.
+- Sample residents replaced with fictional, labelled Shrewsbury samples.
+
 ## [0.1.0] - 2026-11-23
 
 The first public release: the open foundation of People of Bengaluru, as of 10 November 2026.

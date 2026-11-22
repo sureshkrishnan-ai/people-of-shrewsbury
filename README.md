@@ -1,3 +1,18 @@
+> # People of Shrewsbury
+> A stylised 3D **Shrewsbury, Massachusetts** generated from the real map — walk Main Street, Route 9 and the shore of
+> Lake Quinsigamond, meet residents, and discover the local businesses that keep the town going. A community project
+> and a Girl Scout local-economy project, built on the People of City foundation below (AGPL-3.0).
+>
+> **Start here:** `npm ci && npm run dev` → http://localhost:3000 · [ROADMAP](ROADMAP.md) · [Maintaining](docs/MAINTAINING.md) ·
+> [Deploying](docs/DEPLOYING.md) · [Map pipeline](pipeline/README.md) · [Changelog](CHANGELOG.md)
+>
+> What's different from the foundation: one city config (`src/city/`), districts generated from OpenStreetMap +
+> USGS terrain (`pipeline/`, `src/game/districts/realmap/`), and a business side (`/economy`, `/for-businesses`,
+> `/about`, business cards and an economy layer in the 3D town). Map data © OpenStreetMap contributors (ODbL).
+> Try `?district=lake-shore`, `?district=route-9`, `?time=21:00`.
+
+---
+
 <div align="center">
 
 <img src="docs/banner.webp" alt="People of City: a crew of residents standing on a city street at sunset, beside the portal" width="100%">

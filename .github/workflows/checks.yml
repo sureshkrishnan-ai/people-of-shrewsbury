@@ -1,4 +1,4 @@
-# Checks on every pull request into main and every push to main: tests and type-checks. No secrets.
+# Checks on every pull request and push to main / shrewsbury: tests, type-checks, a build. No secrets.
 # Make "checks" a required status check (Settings → Branches → dev and main) so a red PR can't be merged:
 # then broken code never reaches Vercel or Cloudflare. Uses no secrets, so it's safe for any PR.
 
@@ -6,9 +6,9 @@ name: checks
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, shrewsbury]
   push:
-    branches: [main]
+    branches: [main, shrewsbury]
 
 concurrency:
   group: checks-${{ github.event.pull_request.number || github.sha }}
@@ -44,3 +44,9 @@ jobs:
 
       - name: Type-check the room server
         run: npm --prefix realtime run typecheck
+
+      - name: Build the site (no secrets: guest mode)
+        run: npm run build
+
+      - name: District data is present
+        run: test $(ls public/districts/*.json | wc -l) -ge 6

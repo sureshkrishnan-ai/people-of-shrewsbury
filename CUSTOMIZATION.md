@@ -271,6 +271,8 @@ npm test && npx tsc --noEmit -p . && npm run build
 
 ## A future city config
 
+> **Built in this fork:** `src/city/config.ts` + `src/city/districts.json` (and real-map districts from `pipeline/`). See docs/MAINTAINING.md.
+
 Today a city's identity is spread across the files above. A natural next step for the foundation is a single **`city.config.ts`** that everything reads from:
 
 ```ts

@@ -146,7 +146,7 @@
    "trees": 16,
    "pois": 21,
    "streets": 22,
-   "bytes": 179599
+   "bytes": 179598
   },
   "route-9": {
    "buildings": 367,
@@ -156,7 +156,7 @@
    "trees": 76,
    "pois": 49,
    "streets": 40,
-   "bytes": 204087
+   "bytes": 204088
   },
   "lake-shore": {
    "buildings": 158,
@@ -176,7 +176,7 @@
    "trees": 1,
    "pois": 6,
    "streets": 7,
-   "bytes": 80583
+   "bytes": 80584
   },
   "north": {
    "buildings": 271,
@@ -196,7 +196,7 @@
    "trees": 0,
    "pois": 0,
    "streets": 23,
-   "bytes": 154834
+   "bytes": 154835
   }
  },
  "counts": {

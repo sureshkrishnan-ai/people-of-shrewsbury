@@ -1,5 +1,6 @@
 'use client'
 
+import { DISTRICTS } from '../districts/registry'
 import * as THREE from 'three'
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
@@ -174,7 +175,7 @@ export function Portal({ pose }: { pose: Pose }) {
         p={[0, RING_Y + RING_R + 0.95, 0]}
         w={3.6}
         h={0.95}
-        spec={{ title: 'TRAVEL', kn: 'ಪ್ರಯಾಣ', sub: 'HSR · BELLANDUR · WHITEFIELD · DOMLUR · KORAMANGALA', bg: '#2B2F45', fg: '#FFB020' }}
+        spec={{ title: 'TRAVEL', sub: DISTRICTS.map((d) => d.title).join(' · '), bg: '#2B2F45', fg: '#FFB020' }}
         frame={C.WALL_WHITE}
       />
     </group>

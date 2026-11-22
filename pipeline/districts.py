@@ -224,7 +224,17 @@ def build(d):
             fx, fy = p0.x - px, p0.y - py
             slots.append([round(px - cx, 1), round(-(py - cy), 1), round(math.atan2(fx, -fy), 3)])
         out["slots"] = slots[:10]
-        out["portal"] = [round(b.x - cx, 1), round(-(b.y - cy), 1), round(face + math.pi, 3)]
+        # the portal stands beside the street (on the side with room), facing back across it
+        tb = g.project(b); b1 = g.interpolate(min(g.length, tb + 1)) if tb + 1 <= g.length else g.interpolate(tb - 1)
+        dx, dy = b1.x - b.x, b1.y - b.y; l = math.hypot(dx, dy) or 1
+        foot0 = [shape(f["geometry"]) for f in buildings if pad.contains(shape(f["geometry"]).representative_point())]
+        px, py = b.x, b.y
+        for side in (1, -1):
+            qx, qy = b.x - dy / l * 10 * side, b.y + dx / l * 10 * side
+            if not any(fp.distance(Point(qx, qy)) < 5 for fp in foot0):
+                px, py = qx, qy; break
+        pface = math.atan2(b.x - px, -(b.y - py)) if (px, py) != (b.x, b.y) else face
+        out["portal"] = [round(px - cx, 1), round(-(py - cy), 1), round(pface, 3)]
     else:
         out["spawn"] = [0, 0, 0]; out["portal"] = [0, 12, math.pi]; out["slots"] = [[3, 3, 0], [-3, 3, 0], [3, -3, 0]]
     return out

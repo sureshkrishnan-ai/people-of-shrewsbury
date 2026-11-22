@@ -13,6 +13,7 @@ import { realData } from '../districts/realmap'
 import { signPlaces, type SignPlace } from '../districts/realmap/World'
 import { useEconomy } from '../districts/realmap/economyStore'
 import { districtInfo } from '../districts/registry'
+import { loadOwnerProfiles } from '../businessProfiles'
 
 const REACH = 4.5
 const cachePlaces = new Map<string, SignPlace[]>()
@@ -83,6 +84,7 @@ export function BusinessInteraction() {
   const district = useGame((s) => s.district)
   const [near, setNear] = useState<SignPlace | null>(null)
   const [open, setOpen] = useState<Business | null>(null)
+  useEffect(() => void loadOwnerProfiles(), [])
   useEffect(() => {
     setOpen(null)
     // dev only: lets screenshot scripts find a sign

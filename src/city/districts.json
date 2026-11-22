@@ -30,7 +30,7 @@
     {
       "id": "lake-shore",
       "name": "Lake Quinsigamond",
-      "title": "LAKE QUINSIGAMOND",
+      "title": "LAKE SHORE",
       "identity": "North Quinsigamond Avenue \u00b7 the lake shore",
       "accent": "#1F8A9A",
       "centre": [
@@ -56,7 +56,7 @@
     {
       "id": "north",
       "name": "North Shrewsbury",
-      "title": "NORTH SHREWSBURY",
+      "title": "NORTH SIDE",
       "identity": "Residential streets north of the centre",
       "accent": "#4E7D3A",
       "centre": [
@@ -69,7 +69,7 @@
     {
       "id": "south",
       "name": "South Shrewsbury",
-      "title": "SOUTH SHREWSBURY",
+      "title": "SOUTH SIDE",
       "identity": "Residential streets south of Route 9",
       "accent": "#7A5BA8",
       "centre": [

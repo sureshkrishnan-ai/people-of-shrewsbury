@@ -1,6 +1,6 @@
 # Business listing consent — version business-v1
 
-Shown on the business form; the version id (`business-v1`) is stored with every listing (`businesses.consent_version`).
+Shown on the business form (source of truth: `src/city/consent.ts`); the version id (`business-v1`) is stored with every listing (`businesses.consent_version`).
 Change the wording → make a new file `business-v2.md` and bump the version in the form. Never edit a published version.
 
 > I am the owner of this business, or I am authorised by the owner to list it.

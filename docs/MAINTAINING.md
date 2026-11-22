@@ -14,7 +14,7 @@ The routine jobs, in order of how often you'll do them. Read [ROADMAP.md](../ROA
 
 ## Consent records
 - Every business row stores `consent_version` + `consent_at`; the wording lives in `docs/consent/<version>.md`.
-  Never edit a published version — add `business-v2.md` and change the version in `src/app/for-businesses/page.tsx`.
+  Never edit a published version — add `business-v2.md` and update `src/city/consent.ts` (text + CONSENT_VERSION).
 - Interviews: keep the signed/emailed consent (photo, story) in the shared project folder, named `YYYY-MM-DD business-name`.
 - Interiors (future): written permission from the owner/department + their review sign-off, same folder.
 

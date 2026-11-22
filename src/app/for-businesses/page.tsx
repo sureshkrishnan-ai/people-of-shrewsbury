@@ -1,21 +1,14 @@
 import type { Metadata } from 'next'
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
 import { SitePage } from '@/components/SitePage'
 import { CITY } from '@/city/config'
 import { BusinessForm } from './BusinessForm'
+import { CONSENT_TEXT, CONSENT_VERSION } from '@/city/consent'
 
 export const metadata: Metadata = {
   title: `For businesses — ${CITY.siteName}`,
   description: `Get your ${CITY.name} business listed in the 3D town, with your own story and photos.`,
 }
 
-const consent = readFileSync(join(process.cwd(), 'docs/consent/business-v1.md'), 'utf8')
-  .split('\n')
-  .filter((l) => l.startsWith('>'))
-  .map((l) => l.replace(/^>\s?/, ''))
-  .join('\n')
-  .trim()
 
 export default async function ForBusinesses({ searchParams }: { searchParams: Promise<{ listing?: string }> }) {
   const { listing } = await searchParams
@@ -38,9 +31,9 @@ export default async function ForBusinesses({ searchParams }: { searchParams: Pr
         helps every map app), or tell us in the form and we&apos;ll place it on the next map refresh.
       </p>
       <h2>What you agree to</h2>
-      <pre>{consent}</pre>
+      <pre>{CONSENT_TEXT}</pre>
       <h2>Your listing</h2>
-      <BusinessForm osmId={listing ?? ''} consentVersion="business-v1" />
+      <BusinessForm osmId={listing ?? ''} consentVersion={CONSENT_VERSION} />
       <h2>Interviews</h2>
       <p>
         Students in the project may ask to interview you about running a local business. Saying no is completely fine. The

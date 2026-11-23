@@ -88,3 +88,17 @@ describe('corridor chunks from the pipeline', () => {
     expect(shared).toBeGreaterThan(0)
   })
 })
+
+describe('street detail on a corridor chunk', () => {
+  it('places lamps, curbs, poles, mailboxes and stop signs, all on the chunk’s own ground', async () => {
+    const { streetDetail } = await import('./street')
+    const index = JSON.parse(readFileSync('public/districts/main-street.json', 'utf8')) as CorridorIndex
+    const d = decode(JSON.parse(readFileSync(`public/districts/${index.chunks[9].file}`, 'utf8')))
+    const s = streetDetail(d, 'Main Street')
+    expect(s.curbs.length).toBeGreaterThan(50)
+    expect(s.lamps.length).toBeGreaterThan(5)
+    expect(s.poles.length).toBeGreaterThan(3)
+    expect(s.mailboxes.length + s.stops.length).toBeGreaterThan(0)
+    for (const p of [...s.lamps, ...s.poles, ...s.mailboxes]) expect(ownsCell(d.terrain, p.x, p.z)).toBe(true)
+  })
+})

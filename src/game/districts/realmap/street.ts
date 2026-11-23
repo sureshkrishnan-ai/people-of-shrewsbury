@@ -183,7 +183,7 @@ export function streetDetail(d: RealDistrict, street: string | null): StreetDeta
     out.driveways.push({ ax: n.x + ox * off + sx, az: n.z + oz * off + sz, bx: n.x + ox * reach + sx, bz: n.z + oz * reach + sz, w: 3 })
     const mx = n.x + ox * (off + 0.7) + n.dx * side * 3.2
     const mz = n.z + oz * (off + 0.7) + n.dz * side * 3.2
-    if (!blocked(mx, mz, 0.4)) out.mailboxes.push({ x: mx, z: mz, face: Math.atan2(-ox, -oz) })
+    if (owns(mx, mz) && !blocked(mx, mz, 0.4)) out.mailboxes.push({ x: mx, z: mz, face: Math.atan2(-ox, -oz) })
     const kind = seed % 5
     if (kind > 1) continue
     const fx = n.x + ox * (off + 2.4)

@@ -358,6 +358,7 @@ function treeSpots(d: RealDistrict): Ring {
       const z = az + nz * off * side
       if (Math.abs(x) > d.half + 30 || Math.abs(z) > d.half + 30) continue
       if (roadAt(d.id, x, z, 0.6)) continue
+      if (Math.hypot(x - def.portal.x, z - def.portal.z) < 7) continue
       if (def.colliders.some((c) => x > c.min[0] - 2 && x < c.max[0] + 2 && z > c.min[2] - 2 && z < c.max[2] + 2)) continue
       out.push([x, z])
     }

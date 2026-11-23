@@ -45,6 +45,27 @@ each one ends with a CHANGELOG entry and fresh screenshots.
 - **Events layer:** farmers' market, town meeting, parades — a dated pin in the right place, added by maintainers.
 - **History layer:** "then and now" markers with public-domain photos and short texts from the historical society (with permission).
 
+## Real building looks from photos (planned)
+
+Goal: buildings recognisable at street level (colour, siding, windows, porches, storefronts) while keeping the
+stylised look. Heights and roof shapes come from LiDAR/Overture (pipeline); this is the facade layer.
+
+- **Image sources (allowed only):** our own 360° camera walks (e.g. Insta360/Ricoh Theta) and phone photos taken
+  from public streets; owners' storefront photos sent through "Is this your business?"; **Mapillary** (CC BY-SA,
+  credit, free account token) where coverage exists. **Never Google Street View or Google tiles** (terms forbid
+  scraping and derived 3D) — so streetview-to-3d (MIT code, github.com/YellowO2/streetview-to-3d, clone in
+  ~/src/craft-sources/other) is a reference for its photo → depth → 3D idea only, run on our own images.
+- **Per-building attributes from photos:** main colour, trim colour, siding/brick/stone, window rows and spacing,
+  porch, shutters, storefront and sign position → applied to the stylised building generator (no photo textures
+  on houses; storefront signs may use owner-provided images).
+- **Landmarks modelled from photos:** Town Hall, Public Library, churches, the Town Common, fire and police
+  stations (exteriors), key Main Street blocks — one at a time in the stylised kit style.
+- **Optional "real view" for a few landmarks:** a cleaned capture (point cloud or splat) shown as a mini tour, not
+  the main world.
+- **Privacy:** blur faces and licence plates in any stored photos; never photograph into private yards or windows;
+  no residents' house photos published without consent.
+- **Community activity:** a scout-led photo walk down Main Street (route, checklist, consent cards for shop owners).
+
 ## Enterable buildings / interiors (planned — not in v0)
 Walk up to a door — Town Hall, the library, a fire station, a business — and step inside. The interior loads lazily like a
 district through the portal system (only one interior in memory at a time).

@@ -21,6 +21,19 @@ each one ends with a CHANGELOG entry and fresh screenshots.
 - Re-run the map pipeline right before launch; credit OpenStreetMap everywhere it shows.
 
 ## v1.x — the town fills in
+- **Corridors → whole-town streaming:** Main Street and Lexington Road are corridor districts (v1.x start, done): one district
+  frame, chunks on a shared 10 m lattice that stream around the player. The same machinery covers the whole town if the
+  chunks become a grid of 400 m tiles instead of a street's stretches (`streamPlan` only needs chunk boxes). Open items:
+  live rooms for corridors (positions are int16 × 2 cm = ±655 m today; per-chunk rooms or 32-bit positions, and the
+  realtime server redeployed), collisions for street props, more streets (Route 9, Grafton Street, Boylston Street).
+- **Realistic street cross-sections** (plan; ideas from [3DStreet](https://github.com/3DStreet/3dstreet), AGPL-3.0 like us):
+  lanes, turn lanes, bike and bus lanes, parking lanes, medians and sidewalk widths from OSM `lanes` / `width` /
+  `cycleway` / `parking:*` tags, filled in with Streetmix-style segment templates where tags are missing. Port the ideas
+  to r3f (not A-Frame). Reuse its scaled street-furniture models only after checking each model's licence (CC-BY with
+  credit OK; skip NC or unclear). No Google 3D tiles. Credit 3DStreet on `/about` when anything is used.
+- **"Re-imagine Main Street"** (plan): a civic / economics page showing today's Main Street next to a proposed one (wider
+  sidewalks, bike lanes, outdoor dining, parking changes), with sourced notes on foot traffic and local-business impact.
+  Proposals could be drawn in 3DStreet's online editor and imported as cross-section templates.
 - **Districts:** stream neighbouring tiles at district edges (the pipeline already writes 500 m tiles) so the whole
   town becomes walkable; more districts (Edgemere, Spag's/Route 9 east, Dean Park, Prospect Hill).
 - **Landmarks:** hand-built kit models for Town Hall, the Public Library, the Town Common gazebo, the high school,

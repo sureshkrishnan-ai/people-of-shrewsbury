@@ -13,6 +13,14 @@ All notable changes to the People of City foundation are recorded here. The form
 - Business side: OSM business cards, economy layer (X), `/economy`, `/for-businesses` (consent v1 + owner form), `/about`,
   Supabase `businesses` table with RLS, owner interview template.
 - Docs: ROADMAP.md, docs/MAINTAINING.md, docs/DEPLOYING.md.
+- **Corridor districts** (`kind: "corridor"` in `src/city/districts.json`, `pipeline/corridors.py`): a whole street, walkable
+  end to end, cut into ~400 m chunks that stream in and out as you walk (no portal between chunks; terrain chunks tile on a
+  shared 10 m lattice; colliders, road lookup and nav per loaded chunk). Two corridors: **Main Street** (7.3 km, 18 chunks,
+  spawn at the Town Common) and **Lexington Road** (0.4 km, 1 chunk). `?district=main-street`, `?district=lexington-road`, `?at=`.
+- Street detail on corridors: curbs, crosswalks at side streets, stop signs, street lamps, utility poles with wires along the
+  corridor street, mailboxes, driveways, picket fences and hedges, a few parked cars; chimneys and porches on houses.
+- Buildings: hip and shed roofs, measured eave + ridge heights when the pipeline has them (optional
+  `buildings_lidar.geojson` from a MassGIS + LiDAR pass; estimates otherwise).
 #### Changed
 - Districts can be any size (`DistrictDef.half`); colliders indexed in a grid; nav grid scales with the district.
 - Live city: positions in 2 cm steps (±655 m), `BOUNDS` 400, room ids from the city config.

@@ -37,6 +37,12 @@ npm test && npm run build         # then look at each district (?district=route-
 ```
 - Cadence: monthly, and before any launch/press. Overpass is a shared free service: don't run it more than daily.
 - New district: add it to `src/city/districts.json` **and** `ROOM_DISTRICTS` in `shared/net/config.ts` (a test checks), re-run `districts.py`.
+- New corridor (a whole street): add `{"id", "name", "title", "kind": "corridor", "street": "<OSM name>", "buffer": 170,
+  "chunk": 400, "spawnAt": "<place name>"}` to `districts.json` and re-run `districts.py`. It prints chunk count and bytes;
+  keep chunks under ~250 KB (a test checks Main Street). Corridors have no live room yet, so they are **not** added to
+  `ROOM_DISTRICTS`. If a street comes out short, its OSM name differs along the way (check `pipeline/corridors.py` spine_of).
+- LiDAR building heights: when `$SHREWSBURY_OUT/geojson/buildings_lidar.geojson` exists, re-running `districts.py`
+  uses its `height_m` / `ridge_m` / `roof_type` / `ridge_azimuth_deg` for corridor buildings.
 - Census numbers: set `CENSUS_API_KEY` and re-run; they appear on `/economy` with dataset and year.
 
 ## Syncing with the foundation (upstream)

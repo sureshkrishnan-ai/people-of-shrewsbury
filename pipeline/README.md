@@ -37,7 +37,9 @@ python process.py          # town-wide layers, tiles, economy.json, manifest.jso
 python districts.py        # -> ../public/districts/*.json, ../src/city/data/{businesses,economy}.json
 ```
 
-Districts (centre, size) are listed in `../src/city/districts.json`, shared with the game.
+Districts (centre, size) are listed in `../src/city/districts.json`, shared with the game. Corridor districts
+(`kind: "corridor"`: a whole street) are cut by `corridors.py` (called from `districts.py`) into an index file plus
+chunk files in `public/districts/<id>/`; the docstring at the top of `corridors.py` explains the cut.
 Change a centre or add a district there and re-run `districts.py`.
 
 ## Limits (be honest in the UI)

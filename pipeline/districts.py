@@ -57,6 +57,7 @@ def dm(v): return int(round(v * 10))
 
 def district_of(x, y):
     for d in CFG:
+        if d.get("kind") == "corridor": continue
         cx, cy = d["centre"]; h = d["half"]
         if abs(x - cx) <= h and abs(y - cy) <= h: return d["id"]
     return None
@@ -244,6 +245,7 @@ def main():
     DST.mkdir(parents=True, exist_ok=True); DATA.mkdir(parents=True, exist_ok=True)
     summary = {}; meta = {}
     for d in CFG:
+        if d.get("kind") == "corridor": continue
         o = build(d)
         s = json.dumps(o, separators=(",", ":"))
         (DST / f"{d['id']}.json").write_text(s)
@@ -252,18 +254,22 @@ def main():
                             "streets": len(o["names"]), "bytes": len(s)}
         print(d["id"], summary[d["id"]])
         meta[d["id"]] = {"spawn": o["spawn"], "portal": o["portal"], "slots": o["slots"], "places": o["places"], "streets": o["names"]}
+    import corridors  # whole streets, streamed in chunks (corridors.py)
+    corridor_pos = corridors.main(CFG, DST, summary, meta)
     (DATA / "districts-meta.json").write_text(json.dumps(meta, separators=(",", ":"), ensure_ascii=False))
     # town-wide business list (OSM POIs; no stories, no photos — those come from owners with consent)
     biz = []
     for f in pois:
         q = f["properties"]
-        if not q.get("in_town") and not district_of(q["x"], q["y"]): continue
+        along = {c: pos[q["id"]] for c, pos in corridor_pos.items() if q["id"] in pos}
+        if not q.get("in_town") and not district_of(q["x"], q["y"]) and not along: continue
         dist = district_of(q["x"], q["y"])
         cx, cy = next((c["centre"] for c in CFG if c["id"] == dist), (0, 0))
         biz.append({"id": q["id"], "name": q.get("name"), "category": q["category"], "osmKind": q["osm_kind"],
                     "business": bool(q["business"]), "addr": q.get("addr"), "website": q.get("website"),
                     "brand": q.get("brand"), "inTown": bool(q.get("in_town")), "district": dist,
-                    "pos": [round(q["x"] - cx, 1), round(-(q["y"] - cy), 1)] if dist else None})
+                    "pos": [round(q["x"] - cx, 1), round(-(q["y"] - cy), 1)] if dist else None,
+                    **({"corridors": along} if along else {})})
     biz.sort(key=lambda b: (b["district"] or "~", b["name"] or ""))
     (DATA / "businesses.json").write_text(json.dumps({"source": "OpenStreetMap contributors (ODbL), " + man.get("generated", "pipeline run"),
                                                       "businesses": biz}, indent=0, ensure_ascii=False))

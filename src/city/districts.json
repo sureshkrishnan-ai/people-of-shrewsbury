@@ -1,5 +1,5 @@
 {
-  "_note": "Shared by the game (src/city/config.ts) and the map pipeline (pipeline/districts.py). centre = pipeline local metres (x east, y north; see pipeline/README.md). half = half the side of the square walked, in metres.",
+  "_note": "Shared by the game (src/city/config.ts) and the map pipeline (pipeline/districts.py). centre = pipeline local metres (x east, y north; see pipeline/README.md). half = half the side of the square walked, in metres. Corridor districts (kind \"corridor\") follow a whole street instead: street = OSM name, buffer = metres walked either side, chunk = metres of street per streamed chunk, spawnAt = a place name to start beside (pipeline/corridors.py).",
   "districts": [
     {
       "id": "town-center",
@@ -78,6 +78,31 @@
       ],
       "half": 340,
       "spawnStreet": null
+    },
+    {
+      "id": "main-street",
+      "name": "Main Street",
+      "title": "MAIN STREET",
+      "identity": "The whole of Main Street, lake to east end \u00b7 Town Common \u00b7 library \u00b7 churches",
+      "accent": "#8C3B2E",
+      "kind": "corridor",
+      "street": "Main Street",
+      "buffer": 170,
+      "chunk": 400,
+      "spawnAt": "Shrewsbury Town Common",
+      "spawnStreet": "Main Street"
+    },
+    {
+      "id": "lexington-road",
+      "name": "Lexington Road",
+      "title": "LEXINGTON ROAD",
+      "identity": "A residential street of colonials and capes",
+      "accent": "#3E6B8C",
+      "kind": "corridor",
+      "street": "Lexington Road",
+      "buffer": 170,
+      "chunk": 400,
+      "spawnStreet": "Lexington Road"
     }
   ]
 }

@@ -911,7 +911,13 @@
 "pos": [
 -32.4,
 38.4
+],
+"corridors": {
+"main-street": [
+447.6,
+138.4
 ]
+}
 },
 {
 "id": "osm-n739861173",
@@ -927,7 +933,13 @@
 "pos": [
 -56.1,
 39.8
+],
+"corridors": {
+"main-street": [
+423.9,
+139.8
 ]
+}
 },
 {
 "id": "osm-w215980352",
@@ -943,7 +955,13 @@
 "pos": [
 138.1,
 51.5
+],
+"corridors": {
+"main-street": [
+618.1,
+151.5
 ]
+}
 },
 {
 "id": "osm-w215980750",
@@ -959,7 +977,13 @@
 "pos": [
 -16.8,
 157.9
+],
+"corridors": {
+"main-street": [
+463.2,
+257.9
 ]
+}
 },
 {
 "id": "osm-w215980912",
@@ -975,7 +999,13 @@
 "pos": [
 -79.6,
 70.4
+],
+"corridors": {
+"main-street": [
+400.4,
+170.4
 ]
+}
 },
 {
 "id": "osm-n4011044593",
@@ -991,7 +1021,13 @@
 "pos": [
 15.9,
 33.0
+],
+"corridors": {
+"main-street": [
+495.9,
+133.0
 ]
+}
 },
 {
 "id": "osm-w215980308",
@@ -1007,7 +1043,13 @@
 "pos": [
 167.6,
 49.8
+],
+"corridors": {
+"main-street": [
+647.6,
+149.8
 ]
+}
 },
 {
 "id": "osm-w398339407",
@@ -1023,7 +1065,13 @@
 "pos": [
 279.4,
 133.2
+],
+"corridors": {
+"main-street": [
+759.4,
+233.2
 ]
+}
 },
 {
 "id": "osm-w398356730",
@@ -1039,7 +1087,13 @@
 "pos": [
 -325.1,
 260.9
+],
+"corridors": {
+"main-street": [
+154.9,
+360.9
 ]
+}
 },
 {
 "id": "osm-w215981639",
@@ -1055,7 +1109,13 @@
 "pos": [
 -314.3,
 263.4
+],
+"corridors": {
+"main-street": [
+165.7,
+363.4
 ]
+}
 },
 {
 "id": "osm-n4011044604",
@@ -1071,7 +1131,13 @@
 "pos": [
 -118.3,
 54.6
+],
+"corridors": {
+"main-street": [
+361.7,
+154.6
 ]
+}
 },
 {
 "id": "osm-w215981075",
@@ -1087,7 +1153,13 @@
 "pos": [
 -107.8,
 -79.0
+],
+"corridors": {
+"main-street": [
+372.2,
+21.0
 ]
+}
 },
 {
 "id": "osm-n1319513551",
@@ -1103,7 +1175,13 @@
 "pos": [
 -108.8,
 54.7
+],
+"corridors": {
+"main-street": [
+371.2,
+154.7
 ]
+}
 },
 {
 "id": "osm-w215980581",
@@ -1119,7 +1197,13 @@
 "pos": [
 79.0,
 -21.6
+],
+"corridors": {
+"main-street": [
+559.0,
+78.4
 ]
+}
 },
 {
 "id": "osm-n4011044594",
@@ -1135,7 +1219,13 @@
 "pos": [
 41.1,
 39.0
+],
+"corridors": {
+"main-street": [
+521.1,
+139.0
 ]
+}
 },
 {
 "id": "osm-n4011044592",
@@ -1151,7 +1241,13 @@
 "pos": [
 -42.4,
 39.3
+],
+"corridors": {
+"main-street": [
+437.6,
+139.3
 ]
+}
 },
 {
 "id": "osm-n4011044595",
@@ -1167,7 +1263,13 @@
 "pos": [
 83.8,
 89.3
+],
+"corridors": {
+"main-street": [
+563.8,
+189.3
 ]
+}
 },
 {
 "id": "osm-n4011044596",
@@ -1183,7 +1285,13 @@
 "pos": [
 75.5,
 107.8
+],
+"corridors": {
+"main-street": [
+555.5,
+207.8
 ]
+}
 },
 {
 "id": "osm-n11491922415",
@@ -1199,7 +1307,13 @@
 "pos": [
 -121.7,
 -1.2
+],
+"corridors": {
+"main-street": [
+358.3,
+98.8
 ]
+}
 },
 {
 "id": "osm-w215981046",
@@ -1215,7 +1329,13 @@
 "pos": [
 -118.0,
 9.8
+],
+"corridors": {
+"main-street": [
+362.0,
+109.8
 ]
+}
 },
 {
 "id": "osm-w215980764",
@@ -1231,7 +1351,13 @@
 "pos": [
 -13.5,
 45.4
+],
+"corridors": {
+"main-street": [
+466.5,
+145.4
 ]
+}
 },
 {
 "id": "osm-w215981899",
@@ -1244,7 +1370,13 @@
 "brand": "7-Eleven",
 "inTown": true,
 "district": null,
-"pos": null
+"pos": null,
+"corridors": {
+"main-street": [
+89.0,
+369.6
+]
+}
 },
 {
 "id": "osm-w215973002",
@@ -1426,7 +1558,13 @@
 "brand": null,
 "inTown": true,
 "district": null,
-"pos": null
+"pos": null,
+"corridors": {
+"main-street": [
+1280.3,
+344.5
+]
+}
 },
 {
 "id": "osm-w215984447",
@@ -1517,7 +1655,13 @@
 "brand": null,
 "inTown": true,
 "district": null,
-"pos": null
+"pos": null,
+"corridors": {
+"main-street": [
+1572.1,
+242.9
+]
+}
 },
 {
 "id": "osm-n1997986827",
@@ -1595,7 +1739,13 @@
 "brand": "Dunkin'",
 "inTown": true,
 "district": null,
-"pos": null
+"pos": null,
+"corridors": {
+"main-street": [
+115.7,
+340.4
+]
+}
 },
 {
 "id": "osm-w110052885",
@@ -2271,7 +2421,13 @@
 "brand": null,
 "inTown": true,
 "district": null,
-"pos": null
+"pos": null,
+"corridors": {
+"main-street": [
+-951.7,
+568.7
+]
+}
 },
 {
 "id": "osm-w317763357",
@@ -2284,7 +2440,13 @@
 "brand": null,
 "inTown": true,
 "district": null,
-"pos": null
+"pos": null,
+"corridors": {
+"main-street": [
+-882.1,
+619.1
+]
+}
 },
 {
 "id": "osm-n4439434178",
@@ -2297,7 +2459,13 @@
 "brand": null,
 "inTown": true,
 "district": null,
-"pos": null
+"pos": null,
+"corridors": {
+"main-street": [
+-2289.1,
+481.9
+]
+}
 },
 {
 "id": "osm-n12337518742",
@@ -2674,7 +2842,13 @@
 "brand": null,
 "inTown": true,
 "district": null,
-"pos": null
+"pos": null,
+"corridors": {
+"main-street": [
+-447.3,
+386.7
+]
+}
 },
 {
 "id": "osm-n389156202",

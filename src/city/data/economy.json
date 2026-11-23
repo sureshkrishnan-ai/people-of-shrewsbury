@@ -197,6 +197,32 @@
    "pois": 0,
    "streets": 23,
    "bytes": 154835
+  },
+  "main-street": {
+   "kind": "corridor",
+   "length_m": 7304,
+   "chunks": 18,
+   "buildings": 951,
+   "lidar_buildings": 0,
+   "colliders": 7905,
+   "trees": 863,
+   "pois": 29,
+   "streets": 81,
+   "bytes": 902587,
+   "largest_chunk": 77751
+  },
+  "lexington-road": {
+   "kind": "corridor",
+   "length_m": 401,
+   "chunks": 1,
+   "buildings": 125,
+   "lidar_buildings": 0,
+   "colliders": 1294,
+   "trees": 0,
+   "pois": 0,
+   "streets": 7,
+   "bytes": 84490,
+   "largest_chunk": 83886
   }
  },
  "counts": {

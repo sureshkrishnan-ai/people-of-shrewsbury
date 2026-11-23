@@ -214,12 +214,15 @@ export function Player() {
     if (moving) v.wish.normalize()
     v.target.copy(v.wish).multiplyScalar((running ? RUN : WALK) * analog)
     s.vel.lerp(v.target, 1 - Math.exp(-(moving ? 9 : 12) * dt))
+    const px0 = s.pos.x
+    const pz0 = s.pos.z
     s.pos.addScaledVector(s.vel, dt)
     resolveBodies(s.pos, RADIUS)
     resolveCircle(s.pos, RADIUS)
     const half = halfOf(active.def)
     s.pos.x = THREE.MathUtils.clamp(s.pos.x, -half, half)
     s.pos.z = THREE.MathUtils.clamp(s.pos.z, -half, half)
+    if (active.def.walkable) [s.pos.x, s.pos.z] = active.def.walkable(px0, pz0, s.pos.x, s.pos.z)
     s.pos.y = damp(s.pos.y, active.def.ground(s.pos.x, s.pos.z), 20, dt)
 
     const speed = Math.hypot(s.vel.x, s.vel.z)

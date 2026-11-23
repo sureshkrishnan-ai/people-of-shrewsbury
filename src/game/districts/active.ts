@@ -33,6 +33,8 @@ export type DistrictDef = {
   orbit: [number, number, number]
   /** Half the side of the walkable square (m). People of City's hand-built districts are all BOUNDS (46). */
   half?: number
+  /** Keep a step inside the walkable area (corridors: the band along the street). Returns the point to stand on. */
+  walkable?: (px: number, pz: number, x: number, z: number) => [number, number]
   /** Where (x, z) is, by name — a real-map district answers with the nearest street. Checked after landmarks. */
   placeAt?: (x: number, z: number) => string | null
 }
@@ -51,14 +53,14 @@ const LEGACY_HALF = 46
 // list changes (a real-map district fills its colliders after its data loads).
 
 const IDX_CELL = 12
-type Index = { n: number; cells: Map<number, AABB[]> }
+type Index = { n: number; arr: AABB[]; cells: Map<number, AABB[]> }
 const indexes = new WeakMap<DistrictDef, Index>()
 const key = (i: number, j: number) => i * 100_003 + j
 
 function indexOf(d: DistrictDef): Index {
   let ix = indexes.get(d)
-  if (ix && ix.n === d.colliders.length) return ix
-  ix = { n: d.colliders.length, cells: new Map() }
+  if (ix && ix.n === d.colliders.length && ix.arr === d.colliders) return ix
+  ix = { n: d.colliders.length, arr: d.colliders, cells: new Map() }
   for (const b of d.colliders) {
     for (let i = Math.floor(b.min[0] / IDX_CELL); i <= Math.floor(b.max[0] / IDX_CELL); i++)
       for (let j = Math.floor(b.min[2] / IDX_CELL); j <= Math.floor(b.max[2] / IDX_CELL); j++) {

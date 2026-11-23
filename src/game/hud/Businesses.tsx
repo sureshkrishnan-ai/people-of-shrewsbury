@@ -9,7 +9,7 @@ import economy from '@/city/data/economy.json'
 import { useGame } from '../store'
 import { player } from '../people/bodies'
 import { isTyping } from '../player/input'
-import { realData } from '../districts/realmap'
+import { realChunks } from '../districts/realmap'
 import { signPlaces, type SignPlace } from '../districts/realmap/World'
 import { useEconomy } from '../districts/realmap/economyStore'
 import { districtInfo } from '../districts/registry'
@@ -19,13 +19,12 @@ const REACH = 4.5
 const cachePlaces = new Map<string, SignPlace[]>()
 
 function placesFor(district: string) {
-  let p = cachePlaces.get(district)
-  if (!p) {
-    const d = realData(district)
-    if (!d) return []
-    cachePlaces.set(district, (p = signPlaces(d)))
-  }
-  return p
+  // a corridor's signs come chunk by chunk, as the chunks stream in
+  return realChunks(district).flatMap((d) => {
+    let p = cachePlaces.get(d.key)
+    if (!p) cachePlaces.set(d.key, (p = signPlaces(d)))
+    return p
+  })
 }
 
 const blocked = () => {

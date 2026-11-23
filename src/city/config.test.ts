@@ -3,11 +3,19 @@ import { BOUNDS, ROOM_DISTRICTS } from '@shared/net/config'
 import { CITY, cityHour } from './config'
 
 describe('city config', () => {
-  it('lists the same districts as the live-city rooms', () => {
-    expect([...ROOM_DISTRICTS].sort()).toEqual(CITY.districts.map((d) => d.id).sort())
+  // Corridors (whole streets, several km) have no live room yet: positions travel as int16 2 cm steps (±655 m).
+  const squares = CITY.districts.filter((d) => d.kind !== 'corridor')
+  it('lists the same square districts as the live-city rooms', () => {
+    expect([...ROOM_DISTRICTS].sort()).toEqual(squares.map((d) => d.id).sort())
   })
-  it('keeps every district inside the movement bounds', () => {
-    for (const d of CITY.districts) expect(d.half).toBeLessThan(BOUNDS)
+  it('keeps every square district inside the movement bounds', () => {
+    for (const d of squares) expect(d.half).toBeLessThan(BOUNDS)
+  })
+  it('gives every corridor a street and a buffer', () => {
+    for (const d of CITY.districts.filter((x) => x.kind === 'corridor')) {
+      expect(d.street).toBeTruthy()
+      expect(d.buffer).toBeGreaterThan(50)
+    }
   })
   it('has a default district', () => {
     expect(CITY.districts.some((d) => d.id === CITY.defaultDistrict)).toBe(true)

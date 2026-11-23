@@ -55,6 +55,8 @@ export type Business = {
   inTown: boolean
   /** The district it stands in, and where (district metres), or null if outside every walkable district. */
   district: string | null
+  /** Positions along corridor districts (whole streets) it also stands on: { "main-street": [x, z] }. */
+  corridors?: Record<string, [number, number]>
   pos: [number, number] | null
   /** Where the listing came from. */
   source: 'osm' | 'owner'
@@ -72,7 +74,20 @@ export const BUSINESSES: Business[] = (data.businesses as Omit<Business, 'source
 
 export const DATA_SOURCE = data.source
 
-export const businessesIn = (district: string) => BUSINESSES.filter((b) => b.district === district)
+const byDistrict = new Map<string, Business[]>()
+/** The businesses to show in a district: those standing in it, plus (for a corridor) those along its street, at corridor positions. */
+export function businessesIn(district: string): Business[] {
+  let list = byDistrict.get(district)
+  if (!list) {
+    list = BUSINESSES.filter((b) => b.district === district)
+    for (const b of BUSINESSES) {
+      const at = b.corridors?.[district]
+      if (at && b.district !== district) list.push({ ...b, pos: at })
+    }
+    byDistrict.set(district, list)
+  }
+  return list
+}
 
 export const businessById = (id: string) => BUSINESSES.find((b) => b.id === id)
 

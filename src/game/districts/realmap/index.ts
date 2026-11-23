@@ -2,11 +2,12 @@
 // (spawn, portal and standing slots come from src/city/data/districts-meta.json, written by the pipeline);
 // the heavy part — terrain, streets, buildings, colliders — fills in when its file loads (data.ts).
 
-import { CITY } from '@/city/config'
+import { CITY, startPose } from '@/city/config'
 import metaJson from '@/city/data/districts-meta.json'
 import type { AABB } from '../../layout'
 import { registerDistrict, getDistrict, type DistrictDef, type Pose, type Spot, type Surface } from '../active'
-import { heightAt, inRing, loadDistrict, segDist, type RealDistrict } from './data'
+import { forgetDistrict, heightAt, inRing, loadCorridorIndex, loadDistrict, ownsCell, segDist, type CorridorIndex, type RealDistrict, type Ring } from './data'
+import { keepInCorridor, streamPlan, type Box } from './corridor'
 import { businessesIn } from '@/city/businesses'
 
 type Meta = { spawn: [number, number, number]; portal: [number, number, number]; slots: [number, number, number][]; places: [string, number, number][]; streets: string[] }
@@ -16,28 +17,103 @@ const META = metaJson as unknown as Record<string, Meta>
 const loaded = new Map<string, RealDistrict>()
 const listeners = new Set<(id: string) => void>()
 export const onRealLoaded = (fn: (id: string) => void) => (listeners.add(fn), () => listeners.delete(fn))
-export const realData = (id: string) => loaded.get(id)
+
+// ---- corridors: a whole street, streamed in chunks --------------------------------------------------
+type Corridor = { index: CorridorIndex; spine: Ring; boxes: Box[]; chunks: Map<number, RealDistrict>; pending: Set<number> }
+const corridors = new Map<string, Corridor>()
+export const isCorridor = (id: string) => CITY.districts.some((d) => d.id === id && d.kind === 'corridor')
+export const corridorOf = (id: string) => corridors.get(id) ?? null
+
+/** Every loaded piece of a district: the district itself, or a corridor's loaded chunks (west → east). */
+export function realChunks(id: string): RealDistrict[] {
+  const c = corridors.get(id)
+  if (c) return [...c.chunks.entries()].sort((a, b) => a[0] - b[0]).map(([, d]) => d)
+  const d = loaded.get(id)
+  return d ? [d] : []
+}
+/** The district's data (for a corridor: its first loaded chunk). */
+export const realData = (id: string) => loaded.get(id) ?? realChunks(id)[0]
+
+/** The loaded piece whose ground is under (x, z), if any. */
+export function chunkAt(id: string, x: number, z: number): RealDistrict | null {
+  const d = loaded.get(id)
+  if (d) return d
+  const c = corridors.get(id)
+  if (!c) return null
+  let near: RealDistrict | null = null
+  for (const ch of c.chunks.values()) {
+    if (ownsCell(ch.terrain, x, z)) return ch
+    near ??= ch
+  }
+  return near
+}
+
+function corridorChanged(id: string) {
+  const c = corridors.get(id)!
+  const def = getDistrict(id)
+  const chunks = realChunks(id)
+  // a new array, so the collider index and the nav grid see the change even when the count stays the same
+  def.colliders = [...portalColliders(def.portal.x, def.portal.z, def.portal.face), ...chunks.flatMap((ch) => ch.colliders)]
+  indexRoads(id, chunks)
+  def.trees = chunks.flatMap((ch) => ch.trees.filter((_, i) => i % 6 === 0).slice(0, 12)).map(([x, z]) => ({ x, z }))
+  listeners.forEach((fn) => fn(id))
+  void c
+}
+
+function loadChunk(id: string, i: number) {
+  const c = corridors.get(id)!
+  if (c.chunks.has(i) || c.pending.has(i)) return Promise.resolve()
+  c.pending.add(i)
+  const file = c.index.chunks[i].file.replace(/\.json$/, '')
+  return loadDistrict(file)
+    .then((d) => {
+      if (!c.pending.has(i)) return // dropped while loading
+      c.chunks.set(i, d)
+      corridorChanged(id)
+    })
+    .catch(() => {})
+    .finally(() => c.pending.delete(i))
+}
+
+/** Stream a corridor's chunks around (x, z): call it as the player moves (cheap when nothing changes). */
+export function streamCorridor(id: string, x: number, z: number) {
+  const c = corridors.get(id)
+  if (!c) return
+  const have = new Set([...c.chunks.keys(), ...c.pending])
+  const { load, drop } = streamPlan(c.boxes, x, z, have)
+  for (const i of drop) {
+    c.pending.delete(i)
+    if (c.chunks.delete(i)) {
+      forgetDistrict(c.index.chunks[i].file.replace(/\.json$/, ''))
+      corridorChanged(id)
+    }
+  }
+  // one at a time, nearest first: decoding a chunk takes a few ms, so a burst would stutter
+  if (load.length && !c.pending.size) void loadChunk(id, load[0])
+}
 
 // ---- street lookup (HUD label, footsteps) --------------------------------------------------------
 type Seg = { ax: number; az: number; bx: number; bz: number; w: number; name: string | null; cls: string }
 const ROAD_CELL = 20
 const segIndex = new Map<string, Map<number, Seg[]>>()
 
-function indexRoads(d: RealDistrict) {
+function indexRoads(id: string, ds: RealDistrict[]) {
   const cells = new Map<number, Seg[]>()
-  for (const r of d.roads) {
+  for (const r of ds.flatMap((d) => d.roads)) {
     for (let i = 0; i + 1 < r.pts.length; i++) {
       const [ax, az] = r.pts[i]
       const [bx, bz] = r.pts[i + 1]
       const s: Seg = { ax, az, bx, bz, w: r.width, name: r.name, cls: r.cls }
-      const k = Math.floor((ax + bx) / 2 / ROAD_CELL) * 1000 + Math.floor((az + bz) / 2 / ROAD_CELL)
+      const k = cellKey(Math.floor((ax + bx) / 2 / ROAD_CELL), Math.floor((az + bz) / 2 / ROAD_CELL))
       const list = cells.get(k)
       if (list) list.push(s)
       else cells.set(k, [s])
     }
   }
-  segIndex.set(d.id, cells)
+  segIndex.set(id, cells)
 }
+// corridors reach a few km from their centre: keep the key unique well beyond ±1000 cells
+const cellKey = (i: number, j: number) => i * 100_003 + j
 
 /** The road (segment) nearest (x, z) within `reach` m of its edge. */
 export function roadAt(id: string, x: number, z: number, reach = 0): Seg | null {
@@ -49,7 +125,7 @@ export function roadAt(id: string, x: number, z: number, reach = 0): Seg | null 
   const cj = Math.floor(z / ROAD_CELL)
   for (let i = ci - 1; i <= ci + 1; i++)
     for (let j = cj - 1; j <= cj + 1; j++)
-      for (const s of cells.get(i * 1000 + j) ?? []) {
+      for (const s of cells.get(cellKey(i, j)) ?? []) {
         const d = segDist(x, z, s.ax, s.az, s.bx, s.bz) - s.w / 2
         if (d < reach && d < bd) ((bd = d), (best = s))
       }
@@ -62,7 +138,7 @@ const GREEN = new Set(['park', 'grass', 'sports', 'cemetery', 'golf', 'wood', 'f
 function surfaceAt(id: string, x: number, z: number): Surface {
   const r = roadAt(id, x, z, 0)
   if (r) return PATHS.has(r.cls) ? 'pavers' : 'asphalt'
-  const d = loaded.get(id)
+  const d = chunkAt(id, x, z)
   if (d && d.landuse.some((l) => GREEN.has(l.cls) && inRing(l.outer, x, z))) return 'grass'
   return roadAt(id, x, z, 2.5) ? 'pavers' : 'grass'
 }
@@ -91,7 +167,7 @@ for (const c of CITY.districts) {
     id: c.id,
     colliders: [...portalColliders(portal.x, portal.z, portal.face)],
     ground: (x, z) => {
-      const d = loaded.get(c.id)
+      const d = chunkAt(c.id, x, z)
       return d ? heightAt(d.terrain, x, z) : 0
     },
     surface: (x, z) => surfaceAt(c.id, x, z),
@@ -109,24 +185,53 @@ for (const c of CITY.districts) {
     trees: [],
     radio: null,
     orbit: [m.spawn[0], 6, m.spawn[1]],
-    half: c.half,
+    half: c.kind === 'corridor' ? 100_000 : c.half,
     placeAt: (x, z) => roadAt(c.id, x, z, 3)?.name?.toUpperCase() ?? null,
   }
   registerDistrict(def)
+}
+
+/** A corridor's walkable band, set once its index has loaded. */
+function corridorWalk(spine: Ring, buffer: number) {
+  return (px: number, pz: number, x: number, z: number) => keepInCorridor(spine, buffer, px, pz, x, z)
 }
 
 /** Fetch a district's map and fill in its definition (idempotent). */
 export async function ensureRealDistrict(id: string): Promise<RealDistrict | null> {
   if (loaded.has(id)) return loaded.get(id)!
   if (!CITY.districts.some((d) => d.id === id)) return null
+  if (isCorridor(id)) return ensureCorridor(id)
   const data = await loadDistrict(id)
   if (loaded.has(id)) return loaded.get(id)!
   const def = getDistrict(id)
   def.colliders.push(...data.colliders)
   def.trees = data.trees.filter((_, i) => i % 6 === 0).slice(0, 40).map(([x, z]) => ({ x, z }))
-  indexRoads(data)
+  indexRoads(id, [data])
   def.orbit = [def.spawn.x, heightAt(data.terrain, def.spawn.x, def.spawn.z) + 3, def.spawn.z]
   loaded.set(id, data)
   listeners.forEach((fn) => fn(id))
   return data
+}
+
+/** Load a corridor's index and the chunks around where you start (its spawn, or `?at=`). Later chunks stream in. */
+async function ensureCorridor(id: string): Promise<RealDistrict | null> {
+  let c = corridors.get(id)
+  if (!c) {
+    const index = await loadCorridorIndex(id)
+    c = corridors.get(id)
+    if (!c) {
+      const spine: Ring = []
+      for (let i = 0; i + 1 < index.spine.length; i += 2) spine.push([index.spine[i] / 10, index.spine[i + 1] / 10])
+      c = { index, spine, boxes: index.chunks.map((k) => k.box), chunks: new Map(), pending: new Set() }
+      corridors.set(id, c)
+      getDistrict(id).walkable = corridorWalk(spine, index.buffer)
+    }
+  }
+  const def = getDistrict(id)
+  const at = startPose() ?? def.spawn
+  const { load } = streamPlan(c.boxes, at.x, at.z, new Set(c.chunks.keys()))
+  await Promise.all(load.slice(0, 3).map((i) => loadChunk(id, i)))
+  const here = chunkAt(id, def.spawn.x, def.spawn.z)
+  if (here) def.orbit = [def.spawn.x, heightAt(here.terrain, def.spawn.x, def.spawn.z) + 3, def.spawn.z]
+  return realChunks(id)[0] ?? null
 }

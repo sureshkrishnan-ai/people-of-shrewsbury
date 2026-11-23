@@ -7,8 +7,12 @@ let CELL = 0.75
 let HALF = 46
 let N = Math.ceil((HALF * 2) / CELL)
 const INFLATE = 0.45
+// Corridor districts (a whole street, several km): the grid is a window around the trip, not the whole district.
+const WINDOW_OVER = 1000
+let OX = 0
+let OZ = 0
 
-const grids = new Map<string, { g: Uint8Array; n: number; cell: number; half: number; count: number }>()
+const grids = new Map<string, { g: Uint8Array; n: number; cell: number; half: number; count: number; arr: unknown }>()
 
 function setGrid(half: number) {
   HALF = half
@@ -20,10 +24,11 @@ function build() {
   const g = new Uint8Array(N * N)
   for (const b of active.def.colliders) {
     if (b.min[1] > 1.6 || b.max[1] < 0.3) continue
-    const i0 = Math.max(0, cell(b.min[0] - INFLATE))
-    const i1 = Math.min(N - 1, cell(b.max[0] + INFLATE))
-    const j0 = Math.max(0, cell(b.min[2] - INFLATE))
-    const j1 = Math.min(N - 1, cell(b.max[2] + INFLATE))
+    if (b.max[0] - OX < -HALF || b.min[0] - OX > HALF || b.max[2] - OZ < -HALF || b.min[2] - OZ > HALF) continue
+    const i0 = Math.max(0, cell(b.min[0] - OX - INFLATE))
+    const i1 = Math.min(N - 1, cell(b.max[0] - OX + INFLATE))
+    const j0 = Math.max(0, cell(b.min[2] - OZ - INFLATE))
+    const j1 = Math.min(N - 1, cell(b.max[2] - OZ + INFLATE))
     for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) g[j * N + i] = 1
   }
   return g
@@ -57,12 +62,24 @@ function lineOfSight(g: Uint8Array, ax: number, az: number, bx: number, bz: numb
 
 /** Grid A* (8-way, no corner cutting) + line-of-sight smoothing. Returns world XZ waypoints. */
 export function findPath(fx: number, fz: number, tx: number, tz: number): [number, number][] | null {
-  let rec = grids.get(active.def.id)
-  if (!rec || rec.count !== active.def.colliders.length) {
-    setGrid(halfOf(active.def))
-    rec = { g: build(), n: N, cell: CELL, half: HALF, count: active.def.colliders.length }
-    grids.set(active.def.id, rec)
+  const big = halfOf(active.def) > WINDOW_OVER
+  const ox = big ? Math.round((fx + tx) / 100) * 50 : 0
+  const oz = big ? Math.round((fz + tz) / 100) * 50 : 0
+  const half = big ? Math.min(400, Math.max(120, Math.ceil(Math.hypot(tx - fx, tz - fz) / 2 / 50) * 50 + 60)) : halfOf(active.def)
+  const id = big ? `${active.def.id}@${ox},${oz},${half}` : active.def.id
+  let rec = grids.get(id)
+  if (!rec || rec.count !== active.def.colliders.length || rec.arr !== active.def.colliders) {
+    if (big) for (const k of grids.keys()) if (k.startsWith(`${active.def.id}@`)) grids.delete(k)
+    OX = ox
+    OZ = oz
+    setGrid(half)
+    rec = { g: build(), n: N, cell: CELL, half: HALF, count: active.def.colliders.length, arr: active.def.colliders }
+    grids.set(id, rec)
   }
+  fx -= ox
+  fz -= oz
+  tx -= ox
+  tz -= oz
   ;({ n: N, cell: CELL, half: HALF } = rec)
   const g = rec.g
   const s = nearestFree(g, cell(fx), cell(fz))
@@ -151,5 +168,5 @@ export function findPath(fx: number, fz: number, tx: number, tz: number): [numbe
     out.push(raw[b])
     a = b
   }
-  return out
+  return big ? out.map(([x, z]) => [x + ox, z + oz] as [number, number]) : out
 }

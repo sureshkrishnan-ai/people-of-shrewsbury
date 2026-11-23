@@ -17,8 +17,15 @@ export type CityDistrict = {
   accent: string
   /** Pipeline local metres (x east, y north) — see pipeline/README.md. */
   centre: [number, number]
-  /** Half the side of the walkable square, metres. */
-  half: number
+  /** Half the side of the walkable square, metres (square districts). */
+  half?: number
+  /** "corridor": a whole street, streamed in chunks (pipeline/corridors.py); otherwise a square. */
+  kind?: 'square' | 'corridor'
+  /** Corridor: the OSM street name, metres walked either side, metres of street per chunk, place to start beside. */
+  street?: string
+  buffer?: number
+  chunk?: number
+  spawnAt?: string
   /** The street you arrive on (pipeline picks its point nearest the centre). */
   spawnStreet?: string | null
 }

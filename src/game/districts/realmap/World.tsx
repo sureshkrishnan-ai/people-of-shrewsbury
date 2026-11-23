@@ -14,8 +14,13 @@ import { getDistrict } from '../active'
 import { applyGroundGrade } from '../../materials'
 import { useQuality } from '../../device'
 import { useEconomy } from './economyStore'
-import { ensureRealDistrict, realData, roadAt } from '.'
-import { heightAt, type RealDistrict, type Ring } from './data'
+import { ensureRealDistrict, isCorridor, onRealLoaded, realChunks, roadAt, streamCorridor } from '.'
+import { heightAt, ownsCell, segDist, type RealDistrict, type Ring } from './data'
+import { isHouse, streetDetail, type StreetDetail } from './street'
+import { StreetProps } from './StreetProps'
+import { player } from '../../people/bodies'
+import { collidersNear } from '../active'
+import { CITY } from '@/city/config'
 import { hash, HOUSE_WALLS, COMMERCIAL_WALLS, ROOFS, GROUND } from './palette'
 
 // ---------------------------------------------------------------------------------------------- ground
@@ -40,26 +45,29 @@ const LANDUSE_FILL: Record<string, string> = {
   school: GROUND.school, parking: GROUND.parking, wood: GROUND.wood, wetland: GROUND.wetland, farmland: GROUND.farm, sand: GROUND.sand,
 }
 
-function paintGround(d: RealDistrict, px: number) {
-  const size = (d.terrain.n - 1) * d.terrain.cell
-  const o = d.terrain.origin
-  const k = px / size
+function paintGround(d: RealDistrict, px: number, detail: StreetDetail | null) {
+  const { nx, nz, cell, ox, oz } = d.terrain
+  const sx = (nx - 1) * cell
+  const sz = (nz - 1) * cell
+  const k = px / Math.max(sx, sz)
   const cv = document.createElement('canvas')
-  cv.width = cv.height = px
+  cv.width = Math.ceil(sx * k)
+  cv.height = Math.ceil(sz * k)
   const g = cv.getContext('2d')!
-  const X = (x: number) => (x - o) * k
+  const X = (x: number) => (x - ox) * k
+  const Z = (z: number) => (z - oz) * k
   const path = (r: Ring) => {
-    r.forEach(([x, z], i) => (i ? g.lineTo(X(x), X(z)) : g.moveTo(X(x), X(z))))
+    r.forEach(([x, z], i) => (i ? g.lineTo(X(x), Z(z)) : g.moveTo(X(x), Z(z))))
     g.closePath()
   }
-  // base lawn with a soft mottling
+  // base lawn with a soft mottling (positions in world metres, so it runs on across corridor chunks)
   g.fillStyle = GROUND.lawn
-  g.fillRect(0, 0, px, px)
-  for (let i = 0; i < 1400; i++) {
+  g.fillRect(0, 0, cv.width, cv.height)
+  for (let i = 0; i < 1400 * Math.max(1, (sx * sz) / 600000); i++) {
     g.fillStyle = i % 2 ? 'rgba(255,255,230,0.05)' : 'rgba(30,60,20,0.05)'
     const r = 4 + ((i * 7919) % 23)
     g.beginPath()
-    g.arc((i * 104729) % px, (i * 1299709) % px, r, 0, Math.PI * 2)
+    g.arc((i * 104729) % cv.width, (i * 1299709) % cv.height, r, 0, Math.PI * 2)
     g.fill()
   }
   for (const l of [...d.landuse].sort((a, b) => (a.cls === 'parking' ? 1 : 0) - (b.cls === 'parking' ? 1 : 0))) {
@@ -80,7 +88,7 @@ function paintGround(d: RealDistrict, px: number) {
   const roads = [...d.roads].sort((a, b) => (ROAD_STYLE[a.cls]?.order ?? 0) - (ROAD_STYLE[b.cls]?.order ?? 0))
   const stroke = (r: Ring) => {
     g.beginPath()
-    r.forEach(([x, z], i) => (i ? g.lineTo(X(x), X(z)) : g.moveTo(X(x), X(z))))
+    r.forEach(([x, z], i) => (i ? g.lineTo(X(x), Z(z)) : g.moveTo(X(x), Z(z))))
   }
   g.lineJoin = g.lineCap = 'round'
   // pavements first (a pale band either side of every car road), then the asphalt over them
@@ -92,6 +100,26 @@ function paintGround(d: RealDistrict, px: number) {
     g.lineWidth = (r.width + 3.4) * k
     g.stroke()
   }
+  // driveways from the street to each house (corridor chunks)
+  for (const w of detail?.driveways ?? []) {
+    g.beginPath()
+    g.moveTo(X(w.ax), Z(w.az))
+    g.lineTo(X(w.bx), Z(w.bz))
+    g.strokeStyle = '#8F8C86'
+    g.lineWidth = w.w * k
+    g.lineCap = 'butt'
+    g.stroke()
+    g.lineCap = 'round'
+  }
+  // the curb's shadow line at the pavement's edge (corridor chunks)
+  if (detail)
+    for (const r of roads) {
+      if ((ROAD_STYLE[r.cls]?.order ?? 0) < 3) continue
+      stroke(r.pts)
+      g.strokeStyle = 'rgba(70,66,60,0.55)'
+      g.lineWidth = (r.width + 0.6) * k
+      g.stroke()
+    }
   for (const r of roads) {
     const s = ROAD_STYLE[r.cls] ?? ROAD_STYLE.service
     stroke(r.pts)
@@ -110,6 +138,17 @@ function paintGround(d: RealDistrict, px: number) {
     else g.setLineDash([3 * k, 4 * k])
     g.stroke()
     g.setLineDash([])
+  }
+  // curb line, and crosswalks across the mouths of side streets
+  if (detail) {
+    g.fillStyle = 'rgba(246,244,236,0.92)'
+    for (const c of detail.crosswalks) {
+      g.save()
+      g.translate(X(c.x), Z(c.z))
+      g.rotate(Math.atan2(Math.cos(c.face), Math.sin(c.face)))
+      for (let y = -c.w / 2 + 0.3; y < c.w / 2 - 0.3; y += 1.1) g.fillRect(-1.4 * k, y * k, 2.8 * k, 0.55 * k)
+      g.restore()
+    }
   }
   // street names painted along the road, map style, every ~120 m
   g.textAlign = 'center'
@@ -134,7 +173,7 @@ function paintGround(d: RealDistrict, px: number) {
       if (a > Math.PI / 2) a -= Math.PI
       if (a < -Math.PI / 2) a += Math.PI
       g.save()
-      g.translate(X(mx), X(mz))
+      g.translate(X(mx), Z(mz))
       g.rotate(a)
       g.font = `italic 800 ${Math.max(9, Math.min(r.width * 0.55, 4.2) * k)}px "Barlow Condensed", sans-serif`
       g.fillStyle = 'rgba(255,248,232,0.92)'
@@ -148,22 +187,37 @@ function paintGround(d: RealDistrict, px: number) {
   return tex
 }
 
-function Terrain({ d }: { d: RealDistrict }) {
+function Terrain({ d, detail }: { d: RealDistrict; detail: StreetDetail | null }) {
   const level = useQuality((s) => s.level)
   const px = level <= 1 ? 2048 : 4096
   const { geo, mat } = useMemo(() => {
-    const { n, cell, origin, h } = d.terrain
-    const size = (n - 1) * cell
-    const geo = new THREE.PlaneGeometry(size, size, n - 1, n - 1)
+    const { nx, nz, cell, ox, oz, h, mask } = d.terrain
+    const sx = (nx - 1) * cell
+    const sz = (nz - 1) * cell
+    const geo = new THREE.PlaneGeometry(sx, sz, nx - 1, nz - 1)
     geo.rotateX(-Math.PI / 2)
-    geo.translate(origin + size / 2, 0, origin + size / 2)
+    geo.translate(ox + sx / 2, 0, oz + sz / 2)
     const pos = geo.attributes.position as THREE.BufferAttribute
     // PlaneGeometry rotated: vertex (i, j) runs west→east, north→south — the same order as the grid
     for (let v = 0; v < pos.count; v++) pos.setY(v, h[v])
     geo.computeVertexNormals()
-    const mat = new THREE.MeshStandardMaterial({ map: paintGround(d, px), roughness: 0.95 })
+    if (mask) {
+      // a corridor chunk draws only the cells it owns, so neighbouring chunks meet without overlap
+      // (normals were computed on the whole box first, so the shading matches across the seam)
+      const idx: number[] = []
+      mask.forEach((row, j) => {
+        for (let k = 0; k + 1 < row.length; k += 2)
+          for (let i = row[k]; i < row[k + 1]; i++) {
+            const a = i + nx * j
+            const b = i + nx * (j + 1)
+            idx.push(a, b, a + 1, b, b + 1, a + 1)
+          }
+      })
+      geo.setIndex(idx)
+    }
+    const mat = new THREE.MeshStandardMaterial({ map: paintGround(d, px, detail), roughness: 0.95 })
     return { geo, mat }
-  }, [d, px])
+  }, [d, px, detail])
   useEffect(() => () => (geo.dispose(), mat.map?.dispose(), mat.dispose()), [geo, mat])
   return <mesh geometry={geo} material={mat} receiveShadow />
 }
@@ -195,7 +249,12 @@ type Built = { walls: THREE.BufferGeometry; roofs: THREE.BufferGeometry; wallCol
 
 const COMMERCIAL = new Set(['commercial', 'retail', 'office', 'industrial', 'supermarket', 'warehouse', 'school', 'university', 'hospital', 'church', 'civic', 'public', 'apartments', 'hotel'])
 
+const BRICK = new THREE.Color('#9A4A3A')
+const TRIM_WHITE = new THREE.Color('#F4F1EA')
+
 function buildBuildings(d: RealDistrict): Built {
+  // corridor chunks get the New England extras (chimneys, porches)
+  const detail = d.chunk !== null
   const wp: number[] = []
   const wuv: number[] = []
   const wc: number[] = []
@@ -210,10 +269,14 @@ function buildBuildings(d: RealDistrict): Built {
     const seed = hash(b.cx * 31 + b.cz * 17)
     const wall = new THREE.Color(big ? COMMERCIAL_WALLS[seed % COMMERCIAL_WALLS.length] : HOUSE_WALLS[seed % HOUSE_WALLS.length])
     const roof = new THREE.Color(ROOFS[(seed >> 3) % ROOFS.length])
+    const trim = roof
+    const house = isHouse(b)
     const cat = b.category >= 0 ? (CITY_CATS[b.category] as BusinessCategory) : null
     const econ = cat ? new THREE.Color(CATEGORY_COLOR[cat]) : grey
     const y0 = b.base - 0.6
-    const top = b.base + (b.gable ? Math.max(2.8, b.height * 0.62) : b.height)
+    const kind = b.roof
+    // eave height: measured (LiDAR) when the pipeline had it, else estimated from the total height
+    const top = b.base + (b.eave ?? (kind !== 'flat' ? Math.max(2.8, b.height * 0.62) : b.height))
     const ring = b.ring
     // walls
     let run = 0
@@ -230,8 +293,12 @@ function buildBuildings(d: RealDistrict): Built {
       wuv.push(u0, 0, u1, 0, u1, v1, u0, 0, u1, v1, u0, v1)
       for (let k = 0; k < 6; k++) (wc.push(wall.r, wall.g, wall.b), we.push(econ.r, econ.g, econ.b))
     }
+    const tri = (col: THREE.Color, ...v: number[][]) => {
+      v.forEach((p) => rp.push(...p))
+      for (let k = 0; k < v.length; k++) (rc.push(col.r, col.g, col.b), re.push(econ.r, econ.g, econ.b))
+    }
     // roof
-    if (b.gable) {
+    if (kind !== 'flat') {
       const ux = Math.cos(b.ridge)
       const uz = Math.sin(b.ridge)
       let a0 = Infinity, a1 = -Infinity, c0 = Infinity, c1 = -Infinity
@@ -242,19 +309,63 @@ function buildBuildings(d: RealDistrict): Built {
       }
       const ov = 0.35
       a0 -= ov; a1 += ov; c0 -= ov; c1 += ov
-      const rise = Math.min(4.5, Math.max(1.6, (c1 - c0) * 0.36))
+      const measured = b.eave !== null && b.height - b.eave > 0.3 ? b.height - b.eave : null
+      const rise = measured ?? Math.min(4.5, Math.max(1.6, (c1 - c0) * (kind === 'shed' ? 0.2 : 0.36)))
       const cm = (c0 + c1) / 2
       const P = (a: number, c: number, y: number) => [a * ux - c * uz, y, a * uz + c * ux]
       const e00 = P(a0, c0, top), e10 = P(a1, c0, top), e01 = P(a0, c1, top), e11 = P(a1, c1, top)
-      const r0 = P(a0, cm, top + rise), r1 = P(a1, cm, top + rise)
-      const tri = (...v: number[][]) => v.forEach((p) => rp.push(...p))
-      tri(e00, e10, r1, e00, r1, r0) // slope one
-      tri(e11, e01, r0, e11, r0, r1) // slope two
-      tri(e00, r0, e01) // gable ends
-      tri(e10, e11, r1)
-      // gable-end walls in the wall colour would need UVs; paint them roof colour (reads as trim)
-      for (let k = 0; k < 18; k++) (rc.push(roof.r, roof.g, roof.b), re.push(econ.r, econ.g, econ.b))
-      // a lighter band where the eaves meet the wall
+      if (kind === 'shed') {
+        // one slope, low on the c0 side, high on c1; the raised sides in the wall colour
+        const h01 = P(a0, c1, top + rise), h11 = P(a1, c1, top + rise)
+        tri(roof, e00, e10, h11, e00, h11, h01)
+        tri(wall, e01, h01, h11, e01, h11, e11, e00, h01, e01, e10, e11, h11)
+      } else {
+        // gable: the ridge runs end to end; hip: it stops short, and the ends slope too
+        const inset = kind === 'hip' ? Math.min((c1 - c0) / 2, (a1 - a0) / 2 - 0.2) : 0
+        const r0 = P(a0 + inset, cm, top + rise), r1 = P(a1 - inset, cm, top + rise)
+        tri(roof, e00, e10, r1, e00, r1, r0) // slope one
+        tri(roof, e11, e01, r0, e11, r0, r1) // slope two
+        tri(kind === 'hip' ? roof : trim, e00, r0, e01) // ends: hip slopes, or gable ends (trim colour)
+        tri(kind === 'hip' ? roof : trim, e10, e11, r1)
+      }
+      // New England detail on corridor houses: a brick chimney at one end, and a porch on the street side
+      if (detail && house) {
+        const ca = (seed & 4 ? a1 - 1.1 : a0 + 1.1)
+        const cc = cm + 0.45
+        const cw = 0.42
+        const cy0 = top
+        const cy1 = top + rise + 0.8
+        const q = [P(ca - cw, cc - cw, 0), P(ca + cw, cc - cw, 0), P(ca + cw, cc + cw, 0), P(ca - cw, cc + cw, 0)]
+        for (let k = 0; k < 4; k++) {
+          const [x0, , z0] = q[k]
+          const [x1, , z1] = q[(k + 1) % 4]
+          tri(BRICK, [x0, cy0, z0], [x1, cy0, z1], [x1, cy1, z1], [x0, cy0, z0], [x1, cy1, z1], [x0, cy1, z0])
+        }
+        tri(BRICK, [q[0][0], cy1, q[0][2]], [q[1][0], cy1, q[1][2]], [q[2][0], cy1, q[2][2]], [q[0][0], cy1, q[0][2]], [q[2][0], cy1, q[2][2]], [q[3][0], cy1, q[3][2]])
+        if (seed % 3 !== 0 && a1 - a0 > 6) {
+          // porch on the long side nearer the street: a shallow roof on two posts
+          const r = roadAt(d.id, (a0 + a1) / 2 * ux - c0 * uz, (a0 + a1) / 2 * uz + c0 * ux, 40)
+          const n0 = r ? segDist((a0 + a1) / 2 * ux - (c0 - 3) * uz, (a0 + a1) / 2 * uz + (c0 - 3) * ux, r.ax, r.az, r.bx, r.bz) : 0
+          const n1 = r ? segDist((a0 + a1) / 2 * ux - (c1 + 3) * uz, (a0 + a1) / 2 * uz + (c1 + 3) * ux, r.ax, r.az, r.bx, r.bz) : 1
+          const cE = n0 <= n1 ? c0 + ov : c1 - ov
+          const cO = n0 <= n1 ? cE - 2.2 : cE + 2.2
+          const pa0 = a0 + (a1 - a0) * 0.22
+          const pa1 = a1 - (a1 - a0) * 0.22
+          const py = b.base + 2.7
+          const pr = [P(pa0, cE, py + 0.35), P(pa1, cE, py + 0.35), P(pa1, cO, py), P(pa0, cO, py)]
+          tri(roof, pr[0], pr[1], pr[2], pr[0], pr[2], pr[3])
+          for (const pa of [pa0 + 0.2, pa1 - 0.2]) {
+            const c = P(pa, cO + (cO > cE ? -0.15 : 0.15), 0)
+            const w = 0.09
+            const pts = [[c[0] - w, c[2] - w], [c[0] + w, c[2] - w], [c[0] + w, c[2] + w], [c[0] - w, c[2] + w]]
+            for (let k = 0; k < 4; k++) {
+              const [x0, z0] = pts[k]
+              const [x1, z1] = pts[(k + 1) % 4]
+              tri(TRIM_WHITE, [x0, b.base - 0.3, z0], [x1, b.base - 0.3, z1], [x1, py, z1], [x0, b.base - 0.3, z0], [x1, py, z1], [x0, py, z0])
+            }
+          }
+        }
+      }
     } else {
       const contour = ring.map(([x, z]) => new THREE.Vector2(x, z))
       const tris = THREE.ShapeUtils.triangulateShape(contour, [])
@@ -356,10 +467,10 @@ function treeSpots(d: RealDistrict): Ring {
       const off = r.width / 2 + 2.6
       const x = ax + nx * off * side
       const z = az + nz * off * side
-      if (Math.abs(x) > d.half + 30 || Math.abs(z) > d.half + 30) continue
+      if (d.chunk !== null ? !ownsCell(d.terrain, x, z) : Math.abs(x) > d.half + 30 || Math.abs(z) > d.half + 30) continue
       if (roadAt(d.id, x, z, 0.6)) continue
       if (Math.hypot(x - def.portal.x, z - def.portal.z) < 7) continue
-      if (def.colliders.some((c) => x > c.min[0] - 2 && x < c.max[0] + 2 && z > c.min[2] - 2 && z < c.max[2] + 2)) continue
+      if (collidersNear(x, z, 3, def).some((c) => x > c.min[0] - 2 && x < c.max[0] + 2 && z > c.min[2] - 2 && z < c.max[2] + 2)) continue
       out.push([x, z])
     }
   }
@@ -453,6 +564,7 @@ export function signPlaces(d: RealDistrict): SignPlace[] {
   for (const b of businessesIn(d.id)) {
     if (!b.pos || !b.name) continue
     const [px, pz] = b.pos
+    if (d.chunk !== null && !ownsCell(d.terrain, px, pz)) continue
     const r = roadAt(d.id, px, pz, 60)
     if (!r) {
       out.push({ b, x: px, z: pz, face: 0 })
@@ -521,24 +633,53 @@ function mergeGeos(parts: THREE.BufferGeometry[]) {
   return out
 }
 
-/** The whole district. Mounted only while it's the active one (DistrictWorld). */
-export function RealWorld({ id }: { id: string }) {
-  const [d, setD] = useState<RealDistrict | null>(() => realData(id) ?? null)
-  useEffect(() => {
-    let live = true
-    ensureRealDistrict(id).then((x) => live && setD(x))
-    return () => void (live = false)
-  }, [id])
-  const def = getDistrict(id)
-  if (!d) return null
-  const py = heightAt(d.terrain, def.portal.x, def.portal.z)
+/** One piece of ground with everything on it: a square district, or one chunk of a corridor. */
+function Piece({ d, street }: { d: RealDistrict; street: string | null }) {
+  const detail = useMemo(() => (d.chunk !== null ? streetDetail(d, street) : null), [d, street])
   return (
-    <group name={`district-${id}`}>
-      <Terrain d={d} />
+    <group name={d.key}>
+      <Terrain d={d} detail={detail} />
       <Water d={d} />
       <Buildings d={d} />
       <Trees d={d} />
       <Signs d={d} />
+      {detail && <StreetProps d={d} detail={detail} />}
+    </group>
+  )
+}
+
+/** Streams a corridor's chunks around the player (a few checks a second). */
+function CorridorStreamer({ id }: { id: string }) {
+  const t = useMemo(() => ({ next: 0 }), [])
+  useFrame(({ clock }) => {
+    if (clock.elapsedTime < t.next || !player.pos) return
+    t.next = clock.elapsedTime + 0.25
+    streamCorridor(id, player.pos.x, player.pos.z)
+  })
+  return null
+}
+
+/** The whole district. Mounted only while it's the active one (DistrictWorld). */
+export function RealWorld({ id }: { id: string }) {
+  const [pieces, setPieces] = useState<RealDistrict[]>(() => realChunks(id))
+  useEffect(() => {
+    let live = true
+    ensureRealDistrict(id).then(() => live && setPieces(realChunks(id)))
+    const off = onRealLoaded((x) => x === id && live && setPieces(realChunks(id)))
+    return () => void ((live = false), off())
+  }, [id])
+  const def = getDistrict(id)
+  const corridor = isCorridor(id)
+  const street = CITY.districts.find((c) => c.id === id)?.street ?? null
+  if (!pieces.length) return null
+  const under = pieces.find((p) => ownsCell(p.terrain, def.portal.x, def.portal.z)) ?? pieces[0]
+  const py = heightAt(under.terrain, def.portal.x, def.portal.z)
+  return (
+    <group name={`district-${id}`}>
+      {pieces.map((p) => (
+        <Piece key={p.key} d={p} street={street} />
+      ))}
+      {corridor && <CorridorStreamer id={id} />}
       <group position={[0, py, 0]}>
         <Portal pose={def.portal} />
       </group>

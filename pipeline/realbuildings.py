@@ -4,7 +4,8 @@ Reads (all optional, from $SHREWSBURY_OUT/geojson; written by the sibling data p
   buildings_lidar.geojson     MassGIS footprints + USGS 3DEP LiDAR: height_m (eave), ridge_m, top_m, roof_type,
                               ridge_azimuth_deg, confidence, flags
   buildings_overture.geojson  whole town, Overture Maps footprints with a height each (height_source lidar|overture|estimate)
-  trees_lidar.geojson         LiDAR tree tops (height_m, crown_radius_m) + canopy polygons
+  trees_lidar_all.geojson     LiDAR tree tops (height_m, crown_radius_m) + canopy polygons, whole town
+                              (falls back to trees_lidar.geojson, the earlier Main Street / Lexington / Town Center pass)
 
 merged(region) -> [(footprint, props)] for every building whose footprint centre is in `region`:
   1. OSM buildings (they carry the type, category and POI link). A LiDAR footprint replaces the OSM one when it matches
@@ -52,7 +53,7 @@ class Source:
         self.ov_by_osm = {f["properties"]["osm_id"]: k for k, f in enumerate(self.ov) if f["properties"].get("osm_id")}
         self.osm_ids = {f["properties"]["id"] for f in D.buildings}
         print(f"  real buildings: {len(self.lid)} LiDAR, {len(self.ov)} Overture footprints")
-        t = D.load("trees_lidar")
+        t = D.load("trees_lidar_all") or D.load("trees_lidar")  # whole-town pass when it has run, else the corridor pass
         self.trees = [(f["geometry"]["coordinates"][0], f["geometry"]["coordinates"][1], f["properties"]["height_m"], f["properties"]["crown_radius_m"])
                       for f in t if f["properties"].get("kind") == "tree"]
         self.canopy = [shape(f["geometry"]) for f in t if f["properties"].get("kind") == "canopy"]

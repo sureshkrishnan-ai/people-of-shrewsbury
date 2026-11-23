@@ -52,6 +52,9 @@ PATHS = {"footway", "path", "pedestrian", "cycleway", "steps"}
 LANDUSE_KEEP = ["park", "grass", "sports", "cemetery", "golf", "school", "parking", "wood", "wetland", "farmland", "sand"]
 
 
+LTREE_CAP = 5000  # LiDAR trees kept per square district
+
+
 def dm(v): return int(round(v * 10))
 
 
@@ -182,6 +185,7 @@ def build(d):
         step = len(out["trees"]) // 2 / 2500
         t = out["trees"]; out["trees"] = [v for k in range(2500) for v in t[2 * int(k * step):2 * int(k * step) + 2]]
     lt = RB.trees_in(pad, foots, RB.road_shapes(pad))
+    lt = lt[:LTREE_CAP]  # largest first; the game never draws more than its top quality cap (World.tsx LIDAR_TREE_CAP)
     out["ltrees"] = [v for t in lt for v in RB.tree_record(t, cx, cy)]
     cells = [(i, j) for i in range(int((cx - h) // 50), int((cx + h) // 50) + 1) for j in range(int((cy - h) // 50), int((cy + h) // 50) + 1)]
     out["lidarCover"] = round(sum(1 for c in cells if c in S.cover) / len(cells), 2)

@@ -3,6 +3,9 @@ import type { NextConfig } from 'next'
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   devIndicators: false,
+  // `npm run dev` opened from another device on the LAN (e.g. http://192.168.68.155:3000): Next blocks its dev
+  // scripts for hosts other than localhost unless they are listed. Dev only; production ignores this.
+  allowedDevOrigins: ['192.168.68.155', ...(process.env.DEV_ORIGINS?.split(',').filter(Boolean) ?? [])],
   // keep our own AGENTS.md (Next 16 dev would otherwise rewrite it)
   agentRules: false,
   // Only these two are sent to the browser. The publishable key is safe to ship (row-level

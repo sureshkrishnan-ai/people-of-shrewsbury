@@ -139,90 +139,139 @@
  },
  "districts": {
   "town-center": {
-   "buildings": 309,
+   "buildings": 311,
    "roads": 558,
-   "colliders": 2153,
-   "water": 0,
-   "trees": 16,
-   "pois": 21,
-   "streets": 22,
-   "bytes": 179598
-  },
-  "route-9": {
-   "buildings": 367,
-   "roads": 852,
-   "colliders": 1467,
-   "water": 0,
-   "trees": 76,
-   "pois": 49,
-   "streets": 40,
-   "bytes": 204088
-  },
-  "lake-shore": {
-   "buildings": 158,
-   "roads": 225,
-   "colliders": 1212,
-   "water": 2,
-   "trees": 582,
-   "pois": 1,
-   "streets": 10,
-   "bytes": 104964
-  },
-  "route-20": {
-   "buildings": 38,
-   "roads": 251,
-   "colliders": 442,
-   "water": 4,
-   "trees": 1,
-   "pois": 6,
-   "streets": 7,
-   "bytes": 80584
-  },
-  "north": {
-   "buildings": 271,
-   "roads": 311,
-   "colliders": 2196,
+   "colliders": 2158,
    "water": 0,
    "trees": 2,
+   "lidar_trees": 1790,
+   "lidar_cover": 1.0,
+   "height_source": {
+    "overture": 121,
+    "estimate": 43,
+    "lidar": 147
+   },
+   "pois": 21,
+   "streets": 22,
+   "bytes": 216464
+  },
+  "route-9": {
+   "buildings": 392,
+   "roads": 852,
+   "colliders": 1513,
+   "water": 0,
+   "trees": 76,
+   "lidar_trees": 0,
+   "lidar_cover": 0.0,
+   "height_source": {
+    "overture": 314,
+    "estimate": 78
+   },
+   "pois": 49,
+   "streets": 40,
+   "bytes": 209799
+  },
+  "lake-shore": {
+   "buildings": 159,
+   "roads": 225,
+   "colliders": 1217,
+   "water": 2,
+   "trees": 582,
+   "lidar_trees": 28,
+   "lidar_cover": 0.01,
+   "height_source": {
+    "overture": 124,
+    "estimate": 35
+   },
+   "pois": 1,
+   "streets": 10,
+   "bytes": 106803
+  },
+  "route-20": {
+   "buildings": 39,
+   "roads": 251,
+   "colliders": 443,
+   "water": 4,
+   "trees": 1,
+   "lidar_trees": 0,
+   "lidar_cover": 0.0,
+   "height_source": {
+    "overture": 35,
+    "estimate": 4
+   },
+   "pois": 6,
+   "streets": 7,
+   "bytes": 80974
+  },
+  "north": {
+   "buildings": 273,
+   "roads": 311,
+   "colliders": 2197,
+   "water": 0,
+   "trees": 2,
+   "lidar_trees": 0,
+   "lidar_cover": 0.0,
+   "height_source": {
+    "estimate": 31,
+    "overture": 242
+   },
    "pois": 0,
    "streets": 22,
-   "bytes": 139780
+   "bytes": 141850
   },
   "south": {
-   "buildings": 346,
+   "buildings": 352,
    "roads": 357,
-   "colliders": 2052,
+   "colliders": 2080,
    "water": 0,
    "trees": 0,
+   "lidar_trees": 0,
+   "lidar_cover": 0.0,
+   "height_source": {
+    "overture": 295,
+    "estimate": 57
+   },
    "pois": 0,
    "streets": 23,
-   "bytes": 154835
+   "bytes": 158384
   },
   "main-street": {
    "kind": "corridor",
    "length_m": 7304,
    "chunks": 18,
-   "buildings": 951,
-   "lidar_buildings": 0,
-   "colliders": 7905,
-   "trees": 863,
+   "buildings": 963,
+   "lidar_buildings": 771,
+   "height_source": {
+    "lidar": 771,
+    "estimate": 138,
+    "overture": 54
+   },
+   "lidar_trees": 18102,
+   "colliders": 8042,
+   "trees": 0,
    "pois": 29,
    "streets": 81,
-   "bytes": 902587,
-   "largest_chunk": 77751
+   "bytes": 1271096,
+   "largest_chunk": 90521
   },
   "lexington-road": {
    "kind": "corridor",
    "length_m": 401,
    "chunks": 1,
-   "buildings": 125,
-   "lidar_buildings": 0,
-   "colliders": 1294,
+   "buildings": 133,
+   "lidar_buildings": 109,
+   "height_source": {
+    "lidar": 109,
+    "estimate": 18,
+    "overture": 6
+   },
+   "lidar_trees": 1798,
+   "colliders": 1300,
    "trees": 0,
    "pois": 0,
    "streets": 7,
-   "bytes": 84490,
-   "largest_chunk": 83886
+   "bytes": 120434,
+   "largest_chunk": 119815
   }
  },
  "counts": {

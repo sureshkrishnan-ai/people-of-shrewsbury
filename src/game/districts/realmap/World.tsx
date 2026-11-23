@@ -15,7 +15,7 @@ import { applyGroundGrade } from '../../materials'
 import { useQuality } from '../../device'
 import { useEconomy } from './economyStore'
 import { ensureRealDistrict, isCorridor, onRealLoaded, realChunks, roadAt, streamCorridor } from '.'
-import { heightAt, ownsCell, segDist, type RealDistrict, type Ring } from './data'
+import { heightAt, ownsCell, segDist, type HeightSource, type LidarTree, type RealDistrict, type Ring } from './data'
 import { isHouse, streetDetail, type StreetDetail } from './street'
 import { StreetProps } from './StreetProps'
 import { player } from '../../people/bodies'
@@ -250,6 +250,11 @@ type Built = { walls: THREE.BufferGeometry; roofs: THREE.BufferGeometry; wallCol
 const COMMERCIAL = new Set(['commercial', 'retail', 'office', 'industrial', 'supermarket', 'warehouse', 'school', 'university', 'hospital', 'church', 'civic', 'public', 'apartments', 'hotel'])
 
 const BRICK = new THREE.Color('#9A4A3A')
+/** `?heights=1`: tint walls by where the height came from (LiDAR green, Overture blue, OSM yellow, estimate red). */
+const SOURCE_TINT: Record<HeightSource, string> | null =
+  typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('heights') === '1'
+    ? { lidar: '#3FAF5A', overture: '#3F7FCF', osm: '#E0C040', estimate: '#D04A3A' }
+    : null
 const TRIM_WHITE = new THREE.Color('#F4F1EA')
 
 function buildBuildings(d: RealDistrict): Built {
@@ -267,7 +272,7 @@ function buildBuildings(d: RealDistrict): Built {
   for (const b of d.buildings) {
     const big = COMMERCIAL.has(b.type) || b.category >= 0 || b.height > 9
     const seed = hash(b.cx * 31 + b.cz * 17)
-    const wall = new THREE.Color(big ? COMMERCIAL_WALLS[seed % COMMERCIAL_WALLS.length] : HOUSE_WALLS[seed % HOUSE_WALLS.length])
+    const wall = new THREE.Color(SOURCE_TINT ? SOURCE_TINT[b.src] : big ? COMMERCIAL_WALLS[seed % COMMERCIAL_WALLS.length] : HOUSE_WALLS[seed % HOUSE_WALLS.length])
     const roof = new THREE.Color(ROOFS[(seed >> 3) % ROOFS.length])
     const trim = roof
     const house = isHouse(b)
@@ -379,6 +384,45 @@ function buildBuildings(d: RealDistrict): Built {
         }
       }
     }
+    // steeple or cupola where the LiDAR top stands well above the ridge (churches, the town hall, schools)
+    if (b.spire > b.height + 3) {
+      const ux = Math.cos(b.ridge)
+      const uz = Math.sin(b.ridge)
+      let a0 = Infinity, a1 = -Infinity, c0 = Infinity, c1 = -Infinity
+      for (const [x, z] of ring) {
+        const a = x * ux + z * uz
+        const c = -x * uz + z * ux
+        a0 = Math.min(a0, a); a1 = Math.max(a1, a); c0 = Math.min(c0, c); c1 = Math.max(c1, c)
+      }
+      const P = (a: number, c: number, y: number) => [a * ux - c * uz, y, a * uz + c * ux]
+      const cm = (c0 + c1) / 2
+      const steeple = b.spire - b.height > 6
+      const s = steeple ? Math.max(2.4, Math.min(5, (c1 - c0) * 0.42)) / 2 : Math.max(1.0, Math.min(1.8, (c1 - c0) * 0.18))
+      // a steeple stands at the end of the ridge nearer the street; a cupola sits on the middle of the ridge
+      let ca = (a0 + a1) / 2
+      if (steeple) {
+        const end0 = P(a0, cm, 0), end1 = P(a1, cm, 0)
+        const r = roadAt(d.id, b.cx, b.cz, 60)
+        const near0 = r ? segDist(end0[0], end0[2], r.ax, r.az, r.bx, r.bz) <= segDist(end1[0], end1[2], r.ax, r.az, r.bx, r.bz) : true
+        ca = near0 ? a0 + s : a1 - s
+      }
+      const yb = steeple ? b.base - 0.3 : b.base + b.height - 0.8
+      const yt = steeple ? Math.min(b.base + b.height + 2.5, b.base + b.spire - 4) : b.base + b.height + 1.4
+      const q = [P(ca - s, cm - s, 0), P(ca + s, cm - s, 0), P(ca + s, cm + s, 0), P(ca - s, cm + s, 0)]
+      const tc = steeple ? TRIM_WHITE : wall
+      for (let k = 0; k < 4; k++) {
+        const [x0, , z0] = q[k]
+        const [x1, , z1] = q[(k + 1) % 4]
+        tri(tc, [x0, yb, z0], [x1, yb, z1], [x1, yt, z1], [x0, yb, z0], [x1, yt, z1], [x0, yt, z0])
+      }
+      const apex = P(ca, cm, b.base + b.spire)
+      const sp = steeple ? TRIM_WHITE : roof
+      for (let k = 0; k < 4; k++) {
+        const [x0, , z0] = q[k]
+        const [x1, , z1] = q[(k + 1) % 4]
+        tri(sp, [x0, yt, z0], [x1, yt, z1], apex)
+      }
+    }
   }
   const walls = new THREE.BufferGeometry()
   walls.setAttribute('position', new THREE.Float32BufferAttribute(wp, 3))
@@ -449,6 +493,7 @@ function Buildings({ d }: { d: RealDistrict }) {
 // ----------------------------------------------------------------------------------------------- trees
 function treeSpots(d: RealDistrict): Ring {
   const out: Ring = [...d.trees]
+  if (d.lidarCover >= 0.5) return out // the LiDAR pass mapped the real trees here (LidarTrees)
   // decorative street trees along residential streets (not mapped on OSM — marked as such in the README)
   const def = getDistrict(d.id)
   for (const r of d.roads) {
@@ -527,6 +572,89 @@ function Trees({ d }: { d: RealDistrict }) {
     <>
       <instancedMesh ref={(r) => void (refs.c = r)} args={[canopy, cMat, Math.max(1, spots.length)]} castShadow receiveShadow frustumCulled={false} />
       <instancedMesh ref={(r) => void (refs.t = r)} args={[trunk, tMat, Math.max(1, spots.length)]} castShadow frustumCulled={false} />
+    </>
+  )
+}
+
+/** LiDAR trees per piece by quality level; the list comes largest first, so phones drop the smallest. */
+export const LIDAR_TREE_CAP = [600, 1800, 5000] as const
+
+const AUTUMN = ['#5E8C3A', '#6E9A40', '#4F7D34', '#7DA548', '#8A9A3A', '#C9772E', '#B5502E', '#D9A03A']
+const EVERGREEN = ['#2F5A32', '#3A6B3A', '#294D2E', '#35603A']
+
+/** Real trees from the LiDAR canopy: real height and crown radius, a broadleaf crown (two shapes) or a conifer cone. */
+function LidarTrees({ d }: { d: RealDistrict }) {
+  const level = useQuality((s) => s.level)
+  const trees = useMemo(() => d.ltrees.slice(0, LIDAR_TREE_CAP[Math.max(0, Math.min(2, level))]), [d, level])
+  const geo = useMemo(() => {
+    const round = new THREE.IcosahedronGeometry(1, 1)
+    const lumpy = new THREE.DodecahedronGeometry(1, 0)
+    const cone = new THREE.ConeGeometry(1, 1, 7)
+    cone.translate(0, 0.5, 0)
+    const trunk = new THREE.CylinderGeometry(0.14, 0.2, 1, 5)
+    trunk.translate(0, 0.5, 0)
+    const crown = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.9, flatShading: true })
+    const bark = new THREE.MeshStandardMaterial({ color: '#6B4F3A', roughness: 0.9 })
+    return { parts: [round, lumpy, cone], trunk, crown, bark }
+  }, [])
+  const groups = useMemo(() => {
+    const g: LidarTree[][] = [[], [], []]
+    for (const t of trees) g[t.ever ? 2 : hash(t.x * 53 + t.z * 29) % 3 === 0 ? 1 : 0].push(t)
+    return g
+  }, [trees])
+  const refs = useMemo(() => ({ c: [null, null, null] as (THREE.InstancedMesh | null)[], t: null as THREE.InstancedMesh | null }), [])
+  useEffect(() => {
+    const t = refs.t
+    if (!t || refs.c.some((c) => !c)) return
+    const m = new THREE.Matrix4()
+    const q = new THREE.Quaternion()
+    const up = new THREE.Vector3(0, 1, 0)
+    const col = new THREE.Color()
+    const month = new Date().getMonth()
+    const autumn = month === 9 || month === 10
+    let ti = 0
+    groups.forEach((list, k) => {
+      const c = refs.c[k]!
+      list.forEach((tr, i) => {
+        const s = hash(tr.x * 91 + tr.z * 37)
+        const y = heightAt(d.terrain, tr.x, tr.z)
+        q.setFromAxisAngle(up, (s % 628) / 100)
+        let trunkTop: number
+        if (k === 2) {
+          // conifer: a cone from a fifth of the height to the top
+          const y0 = Math.max(1.2, tr.h * 0.2)
+          m.compose(new THREE.Vector3(tr.x, y + y0, tr.z), q, new THREE.Vector3(tr.r, tr.h - y0, tr.r))
+          col.set(EVERGREEN[s % EVERGREEN.length])
+          trunkTop = y0 + 0.8
+        } else {
+          // broadleaf: an ellipsoid crown whose top is the measured height
+          const rv = Math.max(1.2, Math.min(tr.r * 1.15, tr.h * 0.42))
+          m.compose(new THREE.Vector3(tr.x, y + tr.h - rv, tr.z), q, new THREE.Vector3(tr.r, rv, tr.r))
+          col.set(AUTUMN[autumn ? s % AUTUMN.length : s % 5])
+          trunkTop = tr.h - rv
+        }
+        c.setMatrixAt(i, m)
+        c.setColorAt(i, col)
+        const w = Math.max(0.8, Math.min(2.4, tr.h / 11))
+        m.compose(new THREE.Vector3(tr.x, y - 0.2, tr.z), q, new THREE.Vector3(w, trunkTop + 0.2, w))
+        t.setMatrixAt(ti++, m)
+      })
+      c.count = list.length
+      c.instanceMatrix.needsUpdate = true
+      if (c.instanceColor) c.instanceColor.needsUpdate = true
+      c.computeBoundingSphere()
+    })
+    t.count = ti
+    t.instanceMatrix.needsUpdate = true
+    t.computeBoundingSphere()
+  }, [groups, d, refs])
+  const shadows = level >= 1
+  return (
+    <>
+      {geo.parts.map((p, k) => (
+        <instancedMesh key={k} ref={(r) => void (refs.c[k] = r)} args={[p, geo.crown, Math.max(1, groups[k].length)]} castShadow={shadows} receiveShadow />
+      ))}
+      <instancedMesh ref={(r) => void (refs.t = r)} args={[geo.trunk, geo.bark, Math.max(1, trees.length)]} castShadow={shadows} />
     </>
   )
 }
@@ -642,6 +770,7 @@ function Piece({ d, street }: { d: RealDistrict; street: string | null }) {
       <Water d={d} />
       <Buildings d={d} />
       <Trees d={d} />
+      {d.ltrees.length > 0 && <LidarTrees d={d} />}
       <Signs d={d} />
       {detail && <StreetProps d={d} detail={detail} />}
     </group>

@@ -17,8 +17,9 @@ type RawDistrict = {
   names: string[]
   /** [class, width m, name index, flat [x,z] dm, bridge] */
   roads: [string, number, number, number[], number][]
-  /** [ring dm, height dm (top), roof 0 flat|1 gable|2 hip|3 shed, ridge angle, category index | -1, base dm, OSM building type, eave dm (measured; absent = estimate)] */
-  buildings: [number[], number, number, number, number, number, string, number?][]
+  /** [ring dm, height dm (top), roof 0 flat|1 gable|2 hip|3 shed, ridge angle, category index | -1, base dm, OSM building type,
+   *  eave dm (measured; 0/absent = estimate), steeple/cupola top dm (0/absent = none), height source 0 estimate|1 OSM|2 Overture|3 LiDAR] */
+  buildings: [number[], number, number, number, number, number, string, number?, number?, number?][]
   /** [x0, z0, x1, z1] dm */
   colliders: [number, number, number, number][]
   /** [outer ring dm, holes, level m above zBase, name] */
@@ -26,6 +27,10 @@ type RawDistrict = {
   /** [class, outer ring dm, holes, name] */
   landuse: [string, number[], number[][], string | null][]
   trees: number[]
+  /** LiDAR trees, largest first: flat [x dm, z dm, height dm, crown radius dm, evergreen 0|1] */
+  ltrees?: number[]
+  /** share of the ground the LiDAR tree pass covered (0..1); covered ground gets no invented street trees */
+  lidarCover?: number
   pois: string[]
   spawn?: [number, number, number]
   portal?: [number, number, number]
@@ -35,8 +40,14 @@ export type Ring = [number, number][]
 export type Road = { cls: string; width: number; name: string | null; pts: Ring; bridge: boolean }
 export type RoofKind = 'flat' | 'gable' | 'hip' | 'shed'
 const ROOF_KINDS: RoofKind[] = ['flat', 'gable', 'hip', 'shed']
-/** height = top of the building above its base; eave = measured wall height (null: estimated from height). */
-export type BuildingFoot = { ring: Ring; height: number; gable: boolean; roof: RoofKind; eave: number | null; ridge: number; category: number; base: number; type: string; cx: number; cz: number }
+/** Where a building's height came from (pipeline/realbuildings.py). */
+export type HeightSource = 'estimate' | 'osm' | 'overture' | 'lidar'
+const HEIGHT_SOURCES: HeightSource[] = ['estimate', 'osm', 'overture', 'lidar']
+/** height = top of the building above its base; eave = measured wall height (null: estimated from height);
+ *  spire = top of a steeple or cupola above the base (0: none). */
+export type BuildingFoot = { ring: Ring; height: number; gable: boolean; roof: RoofKind; eave: number | null; ridge: number; category: number; base: number; type: string; cx: number; cz: number; spire: number; src: HeightSource }
+/** A LiDAR tree: trunk position, total height and crown radius (m). */
+export type LidarTree = { x: number; z: number; h: number; r: number; ever: boolean }
 export type Terrain = { nx: number; nz: number; cell: number; ox: number; oz: number; h: Float32Array; mask: number[][] | null }
 export type Water = { outer: Ring; holes: Ring[]; level: number; name: string | null }
 export type Landuse = { cls: string; outer: Ring; holes: Ring[]; name: string | null }
@@ -56,6 +67,9 @@ export type RealDistrict = {
   water: Water[]
   landuse: Landuse[]
   trees: Ring
+  /** LiDAR trees, largest first (empty where the LiDAR tree pass has not run) */
+  ltrees: LidarTree[]
+  lidarCover: number
   pois: string[]
   streets: string[]
 }
@@ -92,21 +106,29 @@ export function decode(raw: RawDistrict): RealDistrict {
     zBase: raw.zBase,
     terrain: t,
     roads: raw.roads.map(([cls, width, ni, pts, bridge]) => ({ cls, width, name: ni >= 0 ? raw.names[ni] : null, pts: ring(pts), bridge: !!bridge })),
-    buildings: raw.buildings.map(([r, hh, g, ridge, cat, base, type, eave]) => {
+    buildings: raw.buildings.map(([r, hh, g, ridge, cat, base, type, eave, spire, src]) => {
       const rr = ring(r)
       let cx = 0
       let cz = 0
       for (const [x, z] of rr) ((cx += x), (cz += z))
       const roof = ROOF_KINDS[g] ?? 'flat'
-      return { ring: rr, height: hh / 10, gable: roof === 'gable', roof, eave: eave ? eave / 10 : null, ridge, category: cat, base: base / 10, type, cx: cx / rr.length, cz: cz / rr.length }
+      return { ring: rr, height: hh / 10, gable: roof === 'gable', roof, eave: eave ? eave / 10 : null, ridge, category: cat, base: base / 10, type, cx: cx / rr.length, cz: cz / rr.length, spire: (spire ?? 0) / 10, src: HEIGHT_SOURCES[src ?? (eave ? 3 : 0)] ?? 'estimate' }
     }),
     colliders: raw.colliders.map(([x0, z0, x1, z1]) => ({ min: [x0 / 10, -5, z0 / 10], max: [x1 / 10, 80, z1 / 10] }) as AABB),
     water,
     landuse: raw.landuse.map(([cls, o, holes, name]) => ({ cls, outer: ring(o), holes: holes.map(ring), name })),
     trees: ring(raw.trees),
+    ltrees: lidarTrees(raw.ltrees ?? []),
+    lidarCover: raw.lidarCover ?? 0,
     pois: raw.pois,
     streets: raw.names,
   }
+}
+
+function lidarTrees(f: number[]): LidarTree[] {
+  const out: LidarTree[] = []
+  for (let i = 0; i + 4 < f.length; i += 5) out.push({ x: f[i] / 10, z: f[i + 1] / 10, h: f[i + 2] / 10, r: f[i + 3] / 10, ever: f[i + 4] === 1 })
+  return out
 }
 
 export function inRing(r: Ring, x: number, z: number) {

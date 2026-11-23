@@ -17,10 +17,7 @@ How it is cut (see docs in pipeline/README.md):
 Writes public/districts/<id>.json (index: spine, chunk boxes, spawn, portal) and public/districts/<id>/cNN.json.
 All chunks share ONE district frame (origin = corridor centre), so walking between chunks needs no re-origin.
 
-Optional building attributes (from a MassGIS + LiDAR pass, written to $SHREWSBURY_OUT/geojson/buildings_lidar.geojson):
-height_m (eave), ridge_m, roof_type flat|gable|hip|shed|complex, ridge_azimuth_deg, height_source. When the file is
-present they replace the estimates for the buildings they match (same id, or a LiDAR footprint containing the OSM one's
-centre); unmatched LiDAR footprints are added as plain buildings. Absent: the OSM estimates are used.
+Buildings and trees: realbuildings.py (LiDAR / Overture heights and roofs, MassGIS footprints, LiDAR trees).
 """
 import heapq, json, math
 
@@ -34,25 +31,6 @@ import districts as D
 
 PAD = 40          # drawn beyond the walkable edge (m)
 LATTICE = 10      # m, = terrain cell
-ROOF_KIND = {"flat": 0, "gable": 1, "hip": 2, "shed": 3, "complex": 2, "gambrel": 1, "mansard": 2}
-
-
-def roof_fields(p):
-    """(height dm, roof kind 0 flat|1 gable|2 hip|3 shed, ridge angle (map frame, rad), eave dm or 0 = estimate)."""
-    if p.get("height_m") is not None:
-        eave = float(p["height_m"]); ridge = float(p.get("ridge_m") or eave)
-        kind = ROOF_KIND.get(p.get("roof_type") or "flat", 0)
-        ang = math.radians(90 - float(p["ridge_azimuth_deg"])) if p.get("ridge_azimuth_deg") is not None else p.get("ridge", 0)
-        return D.dm(max(ridge, eave)), kind, ang, D.dm(max(eave, 2.0))
-    return D.dm(p["height"]), 1 if p.get("roof") == "gable" else 0, p.get("ridge", 0), 0
-
-
-def lidar_buildings():
-    fs = D.load("buildings_lidar")
-    if fs: print("  buildings_lidar.geojson:", len(fs), "footprints")
-    return fs
-
-
 def spine_of(name, town):
     """The longest connected run of the street inside the town (+100 m), as one LineString (west/south first)."""
     parts = [shape(f["geometry"]) for f in D.roads if f["properties"].get("name") == name and f["properties"]["cls"] not in D.SKIP_ROADS]
@@ -157,50 +135,20 @@ def build_corridor(d, town):
     for f in D.pois:
         q = f["properties"]
         if q.get("building"): poi_by_building.setdefault(q["building"], q)
-    lid = [f for f in lidar_buildings() if draw.intersects(shape(f["geometry"]))]
-    lid_geo = [shape(f["geometry"]) for f in lid]
-    tree = STRtree(lid_geo) if lid_geo else None
-    lid_by_id = {f["properties"].get("id") or f["properties"].get("osm_id"): k for k, f in enumerate(lid)}
-    used = set()
-    items = []
-    for f in D.buildings:
-        g = shape(f["geometry"])
-        if g.geom_type == "MultiPolygon": g = max(g.geoms, key=lambda a: a.area)
-        c = g.representative_point()
-        if not draw.contains(c) or g.area < 8: continue
-        p = dict(f["properties"])
-        k = lid_by_id.get(p["id"])
-        if k is None and tree is not None:
-            for h in tree.query(c):
-                if lid_geo[h].contains(c) and h not in used: k = int(h); break
-        if k is not None:
-            used.add(k); q = lid[k]["properties"]
-            p.update({a: q[a] for a in ("height_m", "ridge_m", "roof_type", "ridge_azimuth_deg", "height_source") if q.get(a) is not None})
-            lg = lid_geo[k]
-            if lg.geom_type == "MultiPolygon": lg = max(lg.geoms, key=lambda a: a.area)
-            g = lg
-        items.append((g, p))
-    for k, f in enumerate(lid):
-        if k in used: continue
-        g = lid_geo[k]
-        if g.geom_type == "MultiPolygon": g = max(g.geoms, key=lambda a: a.area)
-        if g.area >= 8 and draw.contains(g.representative_point()): items.append((g, dict(f["properties"], id=f"lidar-{k}", type=f["properties"].get("type", "yes"), height=f["properties"].get("height_m", 6))))
+    import realbuildings as RB
     lidar_n = 0
-    for g, p in items:
+    foots = []
+    srcs = {}
+    for g, p in RB.merged(draw):
         c = g.representative_point(); k = own(c.x, c.y)
         if k < 0: continue
-        g = g.simplify(0.25, preserve_topology=True)
-        ring = list(g.exterior.coords)[:-1]
-        if len(ring) < 3: continue
-        if Polygon(ring).exterior.is_ccw: ring = ring[::-1]
         poi = poi_by_building.get(p["id"])
         cat = p.get("category") or (poi and poi.get("category"))
-        base = min(D.zat(x, y) for x, y in ring) - zbase
-        hgt, roof, ang, eave = roof_fields(p)
-        lidar_n += 1 if eave else 0
-        rec = [D.ring_dm(ring, cx, cy), hgt, roof, round(-ang, 3) if roof else 0, D.CATS.index(cat) if cat in D.CATS else -1, D.dm(base), p.get("type", "yes")]
-        if eave: rec.append(eave)
-        chunks[k]["buildings"].append(rec)
+        rec = RB.record(g, p, cx, cy, zbase, D.CATS.index(cat) if cat in D.CATS else -1)
+        if rec is None: continue
+        lidar_n += 1 if p["src"] == "lidar" else 0
+        srcs[p["src"]] = srcs.get(p["src"], 0) + 1
+        chunks[k]["buildings"].append(rec); foots.append(g)
         if walk.buffer(5).contains(c): chunks[k]["colliders"] += D.colliders_for(g, gx)
 
     for f in D.water:
@@ -224,14 +172,23 @@ def build_corridor(d, town):
             for part in getattr(g, "geoms", [g]):
                 if part.geom_type != "Polygon" or part.area < 30: continue
                 chunks[k]["landuse"].append([cls, D.ring_dm(list(part.exterior.coords)[:-1], cx, cy), [D.ring_dm(list(i.coords)[:-1], cx, cy) for i in part.interiors], f["properties"].get("name")])
+    S = RB.src()
     for f in D.trees:
         x, y = f["geometry"]["coordinates"][:2]
         k = own(x, y)
-        if k >= 0: chunks[k]["trees"] += [D.dm(x - cx), D.dm(-(y - cy))]
+        if k >= 0 and not S.covered(x, y): chunks[k]["trees"] += [D.dm(x - cx), D.dm(-(y - cy))]
     for ch in chunks:
         if len(ch["trees"]) > 2 * 1200:
             t = ch["trees"]; step = len(t) // 2 / 1200
             ch["trees"] = [v for q in range(1200) for v in t[2 * int(q * step):2 * int(q * step) + 2]]
+    # LiDAR trees, largest first per chunk (the game drops the smallest on phones)
+    for t in RB.trees_in(draw, foots, RB.road_shapes(draw)):
+        k = own(t[0], t[1])
+        if k >= 0: chunks[k].setdefault("ltrees", []).extend(RB.tree_record(t, cx, cy))
+    for k, ch in enumerate(chunks):
+        ch.setdefault("ltrees", [])
+        cs = cells_of[k]
+        ch["lidarCover"] = round(sum(1 for (i, j) in cs if S.covered(i * LATTICE + 5, j * LATTICE + 5)) / max(1, len(cs)), 2)
     corridor_pos = {}
     for f in D.pois:
         q = f["properties"]
@@ -285,7 +242,7 @@ def build_corridor(d, town):
              "length": round(L), "zBase": round(zbase, 2), "spine": D.ring_dm(list(spine_s.coords), cx, cy),
              "chunks": [], "spawn": [round(a.x - cx, 1), round(-(a.y - cy), 1), round(face, 3)], "portal": portal, "slots": slots[:10],
              "places": [[p["name"], round(p["x"] - cx, 1), round(-(p["y"] - cy), 1)] for p in places]}
-    return index, files, corridor_pos, own, (cx, cy), lidar_n
+    return index, files, corridor_pos, own, (cx, cy), (lidar_n, srcs)
 
 
 def main(cfg, dst, summary, meta):
@@ -293,7 +250,7 @@ def main(cfg, dst, summary, meta):
     positions = {}
     for d in cfg:
         if d.get("kind") != "corridor": continue
-        index, files, cpos, _, _, lidar_n = build_corridor(d, town)
+        index, files, cpos, _, _, (lidar_n, srcs) = build_corridor(d, town)
         folder = dst / d["id"]; folder.mkdir(parents=True, exist_ok=True)
         for old in folder.glob("c*.json"): old.unlink()
         total = 0
@@ -303,12 +260,12 @@ def main(cfg, dst, summary, meta):
             (folder / name).write_text(s); total += len(s)
             t = ch["terrain"]
             index["chunks"].append({"file": f"{d['id']}/{name}", "box": [t["ox"], t["oz"], t["ox"] + (t["nx"] - 1) * t["cell"], t["oz"] + (t["nz"] - 1) * t["cell"]],
-                                    "bytes": len(s), "buildings": len(ch["buildings"])})
+                                    "bytes": len(s), "buildings": len(ch["buildings"]), "ltrees": len(ch["ltrees"]) // 5})
         streets = sorted({n for ch in files for n in ch["names"]})
         s = json.dumps(index, separators=(",", ":"))
         (dst / f"{d['id']}.json").write_text(s); total += len(s)
         summary[d["id"]] = {"kind": "corridor", "length_m": index["length"], "chunks": len(files), "buildings": sum(len(c["buildings"]) for c in files),
-                            "lidar_buildings": lidar_n, "colliders": sum(len(c["colliders"]) for c in files), "trees": sum(len(c["trees"]) // 2 for c in files),
+                            "lidar_buildings": lidar_n, "height_source": srcs, "lidar_trees": sum(len(c["ltrees"]) // 5 for c in files), "colliders": sum(len(c["colliders"]) for c in files), "trees": sum(len(c["trees"]) // 2 for c in files),
                             "pois": len(cpos), "streets": len(streets), "bytes": total, "largest_chunk": max(c["bytes"] for c in index["chunks"])}
         print(d["id"], summary[d["id"]])
         meta[d["id"]] = {"spawn": index["spawn"], "portal": index["portal"], "slots": index["slots"], "places": index["places"], "streets": streets}

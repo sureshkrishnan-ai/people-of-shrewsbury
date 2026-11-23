@@ -115,7 +115,7 @@ def build(d):
     zbase = min(min(r) for r in grid)
     out = {"id": d["id"], "name": d["name"], "centre": [cx, cy], "half": h, "zBase": round(zbase, 2),
            "terrain": {"n": n, "cell": 10, "origin": -(h + 40), "cm": [int(round((z - zbase) * 100)) for r in grid for z in r]},
-           "names": [], "roads": [], "buildings": [], "colliders": [], "water": [], "landuse": [], "trees": [], "pois": []}
+           "names": [], "roads": [], "buildings": [], "colliders": [], "water": [], "landuse": [], "trees": [], "ltrees": [], "pois": [], "srcCount": {}}
     names = {}
 
     def nm(s):
@@ -142,22 +142,16 @@ def build(d):
         q = f["properties"]
         if q.get("building"): poi_by_building.setdefault(q["building"], q)
 
-    for f in buildings:
-        p = f["properties"]
-        g = shape(f["geometry"])
-        if g.geom_type == "MultiPolygon": g = max(g.geoms, key=lambda a: a.area)
+    import realbuildings as RB
+    foots = []
+    for g, p in RB.merged(pad):
         c = g.representative_point()
-        if not pad.contains(c) or g.area < 8: continue
-        g = g.simplify(0.25, preserve_topology=True)
-        ring = list(g.exterior.coords)[:-1]
-        if len(ring) < 3: continue
-        if Polygon(ring).exterior.is_ccw: ring = ring[::-1]  # clockwise in map frame = counter-clockwise seen from above in game frame
         poi = poi_by_building.get(p["id"])
         cat = p.get("category") or (poi and poi.get("category"))
-        base = min(zat(x, y) for x, y in ring) - zbase
-        roof = 1 if p.get("roof") == "gable" else 0
-        out["buildings"].append([ring_dm(ring, cx, cy), dm(p["height"]), roof, round(-p.get("ridge", 0), 3) if roof else 0,
-                                 CATS.index(cat) if cat in CATS else -1, dm(base), p.get("type", "yes")])
+        rec = RB.record(g, p, cx, cy, zbase, CATS.index(cat) if cat in CATS else -1)
+        if rec is None: continue
+        out["buildings"].append(rec); foots.append(g)
+        out["srcCount"][p["src"]] = out["srcCount"].get(p["src"], 0) + 1
         if win.contains(c): out["colliders"] += colliders_for(g, gx)
 
     for f in water:
@@ -179,12 +173,18 @@ def build(d):
             if part.geom_type != "Polygon" or part.area < 30: continue
             out["landuse"].append([cls, ring_dm(list(part.exterior.coords)[:-1], cx, cy), [ring_dm(list(i.coords)[:-1], cx, cy) for i in part.interiors], f["properties"].get("name")])
 
+    # LiDAR trees (real height + crown) where the LiDAR pass covered the ground; OSM / scatter trees elsewhere
+    S = RB.src()
     for f in trees:
         x, y = f["geometry"]["coordinates"][:2]
-        if abs(x - cx) <= h + 40 and abs(y - cy) <= h + 40: out["trees"] += [dm(x - cx), dm(-(y - cy))]
+        if abs(x - cx) <= h + 40 and abs(y - cy) <= h + 40 and not S.covered(x, y): out["trees"] += [dm(x - cx), dm(-(y - cy))]
     if len(out["trees"]) > 2 * 2500:  # phones: cap the instanced trees
         step = len(out["trees"]) // 2 / 2500
         t = out["trees"]; out["trees"] = [v for k in range(2500) for v in t[2 * int(k * step):2 * int(k * step) + 2]]
+    lt = RB.trees_in(pad, foots, RB.road_shapes(pad))
+    out["ltrees"] = [v for t in lt for v in RB.tree_record(t, cx, cy)]
+    cells = [(i, j) for i in range(int((cx - h) // 50), int((cx + h) // 50) + 1) for j in range(int((cy - h) // 50), int((cy + h) // 50) + 1)]
+    out["lidarCover"] = round(sum(1 for c in cells if c in S.cover) / len(cells), 2)
 
     for f in pois:
         q = f["properties"]
@@ -247,10 +247,12 @@ def main():
     for d in CFG:
         if d.get("kind") == "corridor": continue
         o = build(d)
+        src_count = o.pop("srcCount")
         s = json.dumps(o, separators=(",", ":"))
         (DST / f"{d['id']}.json").write_text(s)
         summary[d["id"]] = {"buildings": len(o["buildings"]), "roads": len(o["roads"]), "colliders": len(o["colliders"]),
-                            "water": len(o["water"]), "trees": len(o["trees"]) // 2, "pois": len(o["pois"]),
+                            "water": len(o["water"]), "trees": len(o["trees"]) // 2, "lidar_trees": len(o["ltrees"]) // 5, "lidar_cover": o["lidarCover"],
+                            "height_source": src_count, "pois": len(o["pois"]),
                             "streets": len(o["names"]), "bytes": len(s)}
         print(d["id"], summary[d["id"]])
         meta[d["id"]] = {"spawn": o["spawn"], "portal": o["portal"], "slots": o["slots"], "places": o["places"], "streets": o["names"]}

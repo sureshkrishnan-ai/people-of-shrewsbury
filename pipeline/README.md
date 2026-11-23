@@ -14,7 +14,9 @@ town-wide outputs into the game's districts.
 | Roads, buildings, water, parks, trees, businesses (POIs) | © OpenStreetMap contributors, via Overpass API | ODbL 1.0 — attribution + share-alike for the database |
 | Terrain (10 m bare-earth DEM) | USGS 3D Elevation Program (3DEP), elevation.nationalmap.gov | Public domain |
 | Town statistics (optional) | US Census Bureau API: ACS 5-year profile, County Business Patterns | Public domain; cite dataset + year |
-| (planned) parcels / building footprints | MassGIS | Check the layer's terms before use |
+| Building footprints ("roofprints") | MassGIS Building Structures (2-D) | Free, no use restrictions; credit "MassGIS (Bureau of Geographic Information)" |
+| Building heights, roof shapes, trees | USGS 3DEP LiDAR MA_CentralEastern_1_2021 (via the sibling pipeline's `lidar.py` / `trees_lidar.py`) | Public domain; credit "USGS 3D Elevation Program" |
+| Town-wide building heights | Overture Maps Foundation buildings (incl. Microsoft ML Buildings heights) | ODbL 1.0 — "© Overture Maps Foundation", "© OpenStreetMap contributors" |
 
 The game credits OSM on the title screen and the `/about` page. If you add MassGIS layers, credit them too.
 
@@ -45,8 +47,15 @@ Change a centre or add a district there and re-run `districts.py`.
 ## Limits (be honest in the UI)
 
 - OSM coverage of Shrewsbury buildings is partial (about 14k footprints in town); some streets show no houses.
-- Building heights are mostly **estimates** from footprint size and type (only ~90 have OSM levels).
-- Roof shape: gable vs flat is a heuristic; ridge direction follows the footprint's long side.
-- Trees: OSM-mapped trees plus a scatter inside mapped woods; the game adds decorative street trees.
+- Building heights (`realbuildings.py`): **LiDAR** where the LiDAR pass ran (eave, ridge, roof shape, steeples), else
+  **Overture** (USGS LiDAR or Microsoft ML heights, calibrated), else an estimate by type and size. Every building keeps its
+  source (record field 9; `?heights=1` tints walls: LiDAR green, Overture blue, OSM yellow, estimate red).
+- Roof pitch is drawn at 30–45° for LiDAR gables and hips (the fit reads low); the measured ridge height is kept.
+  `complex` roofs are simplified to a gable or hip; steeples / cupolas are placed at the ridge end nearer the street (the
+  LiDAR gives their height, not their exact position).
+- Trees: LiDAR tree tops (real height + crown radius, conifer vs broadleaf guessed from crown shape) where the LiDAR tree
+  pass ran; elsewhere OSM-mapped trees plus a scatter inside mapped woods, and the game adds decorative street trees.
+- Inputs `buildings_lidar.geojson`, `buildings_overture.geojson`, `trees_lidar.geojson` come from the sibling data pipeline
+  (`people-of-shrewsbury/pipeline`: `lidar.py [--all]`, `trees_lidar.py [--all]`, `overture.py`); absent files fall back to OSM.
 - Business POIs: 163 in town on OSM at the last run — far fewer than really exist. That gap is
   exactly what the business-listing flow fills.

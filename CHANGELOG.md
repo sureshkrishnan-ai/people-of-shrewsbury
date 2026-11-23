@@ -17,6 +17,11 @@ All notable changes to the People of City foundation are recorded here. The form
   end to end, cut into ~400 m chunks that stream in and out as you walk (no portal between chunks; terrain chunks tile on a
   shared 10 m lattice; colliders, road lookup and nav per loaded chunk). Two corridors: **Main Street** (7.3 km, 18 chunks,
   spawn at the Town Common) and **Lexington Road** (0.4 km, 1 chunk). `?district=main-street`, `?district=lexington-road`, `?at=`.
+- **Real building heights, roofs and trees** (`pipeline/realbuildings.py`, all districts and corridor chunks): MassGIS
+  footprints + USGS LiDAR eave/ridge/roof shape (pitch drawn at 30–45°, measured ridge kept), steeples and cupolas from the
+  LiDAR top, Overture heights town-wide, estimates last; footprints OSM lacks are added (deduped by overlap); demolished
+  (no LiDAR roof) buildings dropped. LiDAR trees with real height and crown size (broadleaf ×2 shapes, conifer cone; caps per
+  quality level, smallest dropped first); no invented street trees where LiDAR mapped the real ones. `?heights=1` debug tint.
 - Street detail on corridors: curbs, crosswalks at side streets, stop signs, street lamps, utility poles with wires along the
   corridor street, mailboxes, driveways, picket fences and hedges, a few parked cars; chimneys and porches on houses.
 - Buildings: hip and shed roofs, measured eave + ridge heights when the pipeline has them (optional
